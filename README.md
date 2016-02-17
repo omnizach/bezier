@@ -1,5 +1,11 @@
-# Bezier.js
+# Bezier
 This is a small library that provides additional functionality for drawing [Bezier curves](https://en.wikipedia.org/wiki/B%C3%A9zier_curve).
+
+For no external dependencies, use `bezier.min.js`.
+
+If you use [D3](https://d3js.org/), use `bezier.d3.min.js`, which includes a D3 plugin.
+
+## Getting Started
 
 ## Files
 
