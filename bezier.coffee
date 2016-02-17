@@ -1,67 +1,60 @@
 ###
-@brief Bezier curve and spline plugin for D3.
 
-Credits:
-Function to create control points of a Bezier Spline: https://www.particleincell.com
-Function to compute the length of a Bezier Curve: https://github.com/DmitryBaranovskiy/raphael
+# Bezier
+A library for generating smooth Bezier curves and splines. This contains extra functionality missing from SVG.
 
-@author Zach Young <zach.young@gmail.com>
-@license http://en.wikipedia.org/wiki/MIT_License MIT License
+## Credits
+
+* Function to create control points of a Bezier Spline: [particleincell.com](https://www.particleincell.com)
+* Function to compute the length of a Bezier Curve: [raphael](https://github.com/DmitryBaranovskiy/raphael)
+
+## License
+[MIT](http://en.wikipedia.org/wiki/MIT_License)
+
 ###
 
-###
-Utility function for array zip.
-###
-zip = () ->
+_zip = () ->
+  ### Utility function for array zip. ###
   lengthArray = (arr.length for arr in arguments)
   length = Math.min(lengthArray...)
   for i in [0...length]
     arr[i] for arr in arguments
 
-###
-Produces a list of pairs of adjacent items in an array.
-###
-pairs = (xs) -> ([x, xs[i+1]] for x, i in xs[...-1])
-
-###
-Utility function for defining object property getter.
-###
-Function::getter = (prop, get) ->
+Function::_getter = (prop, get) ->
+  ### Utility function for defining object property getter. ###
   Object.defineProperty @prototype, prop, {get, configurable: yes}
 
-###
-Utility function for defining object property setter.
-###
-Function::setter = (prop, set) ->
+Function::_setter = (prop, set) ->
+  ### Utility function for defining object property setter. ###
   Object.defineProperty @prototype, prop, {set, configurable: yes}
 
-###
-A Point object represents a location in space or a vector.
-###
 class Point
-  ###
-  @param {number} x The x coordinate
-  @param {number} y The y coordinate
-  ###
-  constructor: (@x, @y) ->
+  ### A Point object represents a location in space or a vector. ###
 
-###
-A BezierCurve represents one segment of a spline.
-###
+  constructor: (@x, @y) ->
+    ###
+    * x: Number. The x coordinate
+    * y: Number. The y coordinate
+    ###
+
+
 class BezierCurve
+  ###
+  A BezierCurve represents one segment of a spline.
+  ###
+
   @_base3 = (t, p1, p2, p3, p4) ->
     t1 = -3 * p1 + 9 * p2 - 9 * p3 + 3 * p4
     t2 = t * t1 + 6 * p1 - 12 * p2 + 6 * p3
     return t * t2 - 3 * p1 + 3 * p2;
 
-  ###
-  @param {point} p0 start point
-  @param {point} p1 control point 1
-  @param {point} p2 control point 2
-  @param {point} p3 end point
-  @property {number} length The full length of the curve
-  ###
   constructor: (@p0, @p1, @p2, @p3) ->
+    ###
+    * p0: Point. start point
+    * p1: Point. control point 1
+    * p2: Point. control point 2
+    * p3: Point. end point
+    ###
 
   _findT: (target, guess) ->
     target = Math.min(target, @length)
@@ -75,12 +68,13 @@ class BezierCurve
       @_findT(target, guess - error / 2);
 
   # adapted from: https://github.com/DmitryBaranovskiy/raphael/blob/c47c077368c1113e1ed653376415961749de5466/dev/raphael.core.js
-  ###
-  Computes the length at position t of the curve.
-  @param {number} t The portion of the curve to consider. The curve starts at t=0 and ends at t=1.
-  @returns {number} the length value.
-  ###
   lengthAt: (t = 1) ->
+    ###
+    Computes the length at position t of the curve.
+
+    * t: Number. The portion of the curve to consider. The curve starts at t=0 and ends at t=1.
+    * Returns number, the length value.
+    ###
     t = if t > 1 then 1 else if t < 0 then 0 else t
     t2 = t / 2
 
@@ -95,17 +89,18 @@ class BezierCurve
     .map integrate, this
     .reduce (p, c) -> p + c
 
+  @_getter 'length', -> @_length ?= @lengthAt(1)
   ###
-  @property {number} length The full length of the curve
+  The full length of the curve
   ###
-  @getter 'length', -> @_length ?= @lengthAt(1)
 
-  ###
-  Computes the point at position t of the curve.
-  @param {number} t The portion of the curve to consider. The curve starts at t=0 and ends at t=1.
-  @returns {Point} the location point.
-  ###
   point: (t) ->
+    ###
+    Computes the point at position t of the curve.
+
+    * t: number. The portion of the curve to consider. The curve starts at t=0 and ends at t=1.
+    * Returns: Point, the location point.
+    ###
     new Point((1-t)**3 * @p0.x +
               3 * (1-t)**2 * t * @p1.x +
               3 * (1-t) * t**2 * @p2.x +
@@ -115,20 +110,22 @@ class BezierCurve
               3 * (1-t) * t**2 * @p2.y +
               t**3 * @p3.y)
 
-  ###
-  Computes the point at a length of the curve.
-  @param {number} z The length of the curve to travel.
-  @returns {Point} the location point.
-  ###
   pointAtLength: (z) ->
+    ###
+    Computes the point at a length of the curve.
+
+    * z: number. The length of the curve to travel.
+    * Returns: {Point} the location point.
+    ###
     @point @_findT z
 
-  ###
-  Computes the first derivative at position t of the curve.
-  @param {number} t The point of the curve to consider. The curve starts at t=0 and ends at t=1.
-  @returns {Point} The derivative as a vector.
-  ###
   firstDerivative: (t) ->
+    ###
+    Computes the first derivative at position t of the curve.
+
+    * t: number. The point of the curve to consider. The curve starts at t=0 and ends at t=1.
+    * Returns: Point, The derivative as a vector.
+    ###
     new Point(3 * (1-t) ** 2 * (@p1.x - @p0.x) +
               6 * (1-t) * t * (@p2.x - @p1.x) +
               3 * t**2 * (@p3.x - @p2.x),
@@ -136,52 +133,61 @@ class BezierCurve
               6 * (1-t) * t * (@p2.y - @p1.y) +
               3 * t**2 * (@p3.y - @p2.y))
 
-  ###
-  Computes the second derivative at position t of the curve.
-  @param {number} t The point of the curve to consider. The curve starts at t=0 and ends at t=1.
-  @returns {Point} The second derivative as a vector.
-  ###
   secondDerivative: (t) ->
+    ###
+    Computes the second derivative at position t of the curve.
+
+    * t: number. The point of the curve to consider. The curve starts at t=0 and ends at t=1.
+    * Returns: Point. The second derivative as a vector.
+    ###
     new Point(6 * (1-t) * (@p2.x - 2*@p1.x + @p0.x) +
               6 * t * (@p3.x - 2*@p2.x + @p2.x),
               6 * (1-t) * (@p2.y - 2*@p1.y + @p0.y) +
               6 * t *   (@p3.y - 2*@p2.y + @p2.y))
 
-  ###
-  Computes the curvature at position t of the curve. Curvature is 1/R where R is the instantaneous
-  radius of the curve.
-  @param {number} t The point of the curve to consider. The curve starts at t=0 and ends at t=1.
-  @returns {number} The curvature value.
-  ###
+
   curvature: (t) ->
+    ###
+    Computes the curvature at position t of the curve. Curvature is 1/R where R is the instantaneous
+    radius of the curve.
+
+    * t: number. The point of the curve to consider. The curve starts at t=0 and ends at t=1.
+    * Returns: number, The curvature value.
+    ###
     d1 = @firstDerivative(t) || 0
     d2 = @secondDerivative(t) || 0
     (d1.x*d2.y - d1.y*d2.x) / (d1.x*d1.x + d1.y*d1.y) ** 1.5
 
-  ###
-  Computes the tangent at position t of the curve.
-  @param {number} t The point of the curve to consider. The curve starts at t=0 and ends at t=1.
-  @returns {Point} The tangent as a vector.
-  ###
   tangent: (t) ->
+    ###
+    Computes the tangent at position t of the curve.
+
+    * t: number. The point of the curve to consider. The curve starts at t=0 and ends at t=1.
+    * Returns: Point. The tangent as a vector.
+    ###
     d1 = @firstDerivative(t)
     d = Math.sqrt(d1.x*d1.x + d1.y*d1.y) || 1
     new Point(d1.x/d, d1.y/d)
 
-  ###
-  Computes the normal at position t of the curve.
-  @param {number} t The point of the curve to consider. The curve starts at t=0 and ends at t=1.
-  @returns {Point} The normal as a vector.
-  ###
   normal: (t) ->
+    ###
+    Computes the normal at position t of the curve.
+
+    * t: number The point of the curve to consider. The curve starts at t=0 and ends at t=1.
+    * Returns: Point. The normal as a vector.
+    ###
     tan = @tangent t
-    new Point(-tan.y, tan.x);
+    new Point(-tan.y, tan.x)
 
-
-###
-A series of {@link BezierCurve}s that connect end-to-end, smoothly transitioning from one to the next.
-###
 class BezierSpline
+  ###
+  A series of BezierCurve's that connect end-to-end, smoothly transitioning from one to the next.
+
+  * curves: BezierCurve[]. List of curves that make up the spline
+  * startLengths: number[]. The length of the whole spline up to the start of each segment curve
+  * endLengths: number[]. The length of the whole spline up to the end of each segment curve
+  * length: number. The length of the entire spline
+  ###
   # adapted from https://www.particleincell.com/wp-content/uploads/2012/06/bezier-spline.js
   # computes control points given knots K, this is the brain of the operation
   @computeControlPoints = (k) ->
@@ -240,7 +246,7 @@ class BezierSpline
       cx.p2 = cx.p2[extend..-extend]
       cy.p2 = cy.p2[extend..-extend]
 
-    for [p0x, p0y, p1x, p1y, p2x, p2y, p3x, p3y], i in zip(xs[...-1], ys[...-1], cx.p1, cy.p1, cx.p2, cy.p2, xs[1..], ys[1..])
+    for [p0x, p0y, p1x, p1y, p2x, p2y, p3x, p3y], i in _zip(xs[...-1], ys[...-1], cx.p1, cy.p1, cx.p2, cy.p2, xs[1..], ys[1..])
       c = new BezierCurve(new Point(p0x, p0y), new Point(p1x, p1y), new Point(p2x, p2y), new Point(p3x, p3y))
       c.startLength = startLength;
       c.endLength = startLength + c.length;
@@ -251,16 +257,12 @@ class BezierSpline
 
       c
 
-  ###
-  @param {Point[]} knots Array of points that the spline passes through. A curve is generated connecting each knot point to the next.
-  @param {boolean} [closed] Indicates that the spline should connect its end point back to its start point, making a loop.
-  @property {boolean} closed Indicates that the spline should connect its end point back to its start point, making a loop.
-  @property {BezierCurve[]} curves List of curves that make up the spline
-  @property {number[]} startLengths The length of the whole spline up to the start of each segment curve
-  @property {number[]} endLengths The length of the whole spline up to the end of each segment curve
-  @property {number} length The length of the entire spline
-  ###
   constructor: (knots, closed) ->
+    ###
+
+    * knots: Point[]. Array of points that the spline passes through. A curve is generated connecting each knot point to the next.
+    * closed: Boolean. Default false. Indicates that the spline should connect its end point back to its start point, making a loop.
+    ###
     @closed = closed;
     @curves = BezierSpline.computeBezierSpline(knots.map((p) -> p.x), knots.map((p) -> p.y), closed);
     @startLengths = (c.startLength for c in @curves)
@@ -278,21 +280,23 @@ class BezierSpline
     else
       { i:i, t:t }
 
-  ###
-  Computes the point at position t of the curve.
-  @param {number} t The portion of the curve to consider. The spline starts at t=0 and ends at t=curves.length.
-  @returns {Point} the location point.
-  ###
   point: (t) ->
+    ###
+    Computes the point at position t of the curve.
+
+    * t The portion of the curve to consider. The spline starts at t=0 and ends at t=curves.length.
+    * Returns: Point. the location point.
+    ###
     a = @_curveIndex(t)
     @curves[a.i].point(a.t)
 
-  ###
-  Computes the point at length z of the curve.
-  @param {number} z The length of the curve to travel.
-  @returns {Point} the location point.
-  ###
   pointAtLength: (z) ->
+    ###
+    Computes the point at length z of the curve.
+
+    * z The length of the curve to travel.
+    * Returns: Point. the location point.
+    ###
     findCurveIndex = (lengths, z, start, stop) ->
       mid = start + stop >>> 1
       switch
@@ -303,62 +307,68 @@ class BezierSpline
     i = findCurveIndex(@endLengths, Math.min(z, @endLengths[@endLengths.length-1]), 0, @endLengths.length)
     @curves[i].pointAtLength(z - @startLengths[i])
 
-  ###
-  Computes the first derivative at position t of the curve.
-  @param {number} t The point of the curve to consider. The curve starts at t=0 and ends at t=curves.length.
-  @returns {Point} The derivative as a vector.
-  ###
   firstDerivative: (t) ->
+    ###
+    Computes the first derivative at position t of the curve.
+
+    * t The point of the curve to consider. The curve starts at t=0 and ends at t=curves.length.
+    * Returns: Point. The derivative as a vector.
+    ###
     a = @_curveIndex(t)
     @curves[a.i].firstDerivative(a.t)
 
-  ###
-  Computes the second derivative at position t of the curve.
-  @param {number} t The point of the curve to consider. The curve starts at t=0 and ends at t=curves.length.
-  @returns {Point} The second derivative as a vector.
-  ###
   secondDerivative: (t) ->
+    ###
+    Computes the second derivative at position t of the curve.
+
+    * t The point of the curve to consider. The curve starts at t=0 and ends at t=curves.length.
+    * Returns: Point. The second derivative as a vector.
+    ###
     a = @_curveIndex(t)
     @curves[a.i].secondDerivative(a.t)
 
-  ###
-  Computes the curvature at position t of the curve. Curvature is 1/R where R is the instantaneous
-  radius of the curve.
-  @param {number} t The point of the curve to consider. The curve starts at t=0 and ends at t=curves.length.
-  @returns {number} The curvature value.
-  ###
   curvature: (t) ->
+    ###
+    Computes the curvature at position t of the curve. Curvature is 1/R where R is the instantaneous
+    radius of the curve.
+
+    * t The point of the curve to consider. The curve starts at t=0 and ends at t=curves.length.
+    * Returns: number. The curvature value.
+    ###
     a = @_curveIndex(t)
     @curves[a.i].curvature(a.t)
 
-  ###
-  Computes the tangent at position t of the curve.
-  @param {number} t The point of the curve to consider. The curve starts at t=0 and ends at t=curves.length.
-  @returns {Point} The tangent as a vector.
-  ###
   tangent: (t) ->
+    ###
+    Computes the tangent at position t of the curve.
+
+    * t The point of the curve to consider. The curve starts at t=0 and ends at t=curves.length.
+    * Returns: Point. The tangent as a vector.
+    ###
     a = this._curveIndex(t)
     return this.curves[a.i].tangent(a.t)
 
-  ###
-  Computes the normal at position t of the curve.
-  @param {number} t The point of the curve to consider. The curve starts at t=0 and ends at t=curves.length.
-  @returns {Point} The normal as a vector.
-  ###
   normal: (t) ->
+    ###
+    Computes the normal at position t of the curve.
+
+    * t The point of the curve to consider. The curve starts at t=0 and ends at t=curves.length.
+    * Returns: Point. The normal as a vector.
+    ###
     a = @_curveIndex(t)
     @curves[a.i].normal(a.t)
 
-  ###
-  Produces a new {BezierSpline} with the points normalized.
-  @param {normalizeOptions} [normalize='length'] Option to indicate if the spline should be recomputed to smooth out numerical
-  properties or make drawing easier.
-  length: recompute the spline so that each curve is approximately the same length.
-  x: recompute the curve so that the x values are evenly distributed. Useful for when the knots define a function of y in terms of x coordinates.
-  @param {number} [segmentLength=1] If normalizing, sets the step interval for how close the normalized knot points should be.
-  @param {number} [segmentCount] If normalizing, sets the number of knot points to use, evenly distributed based on the normalization strategy.
-  ###
   normalize: (method, segmentLength, segmentCount) ->
+    ###
+    Produces a new BezierSpline with the points normalized.
+
+    * method: ('length', 'x'). Default 'length'. Option to indicate if the spline should be recomputed to smooth out numerical
+    properties or make drawing easier.
+      * length: recompute the spline so that each curve is approximately the same length.
+      * x: recompute the curve so that the x values are evenly distributed. Useful for when the knots define a function of y in terms of x coordinates.
+    * segmentLength: number. Defatul 1. If normalizing, sets the step interval for how close the normalized knot points should be.
+    * segmentCount: number. If normalizing, sets the number of knot points to use, evenly distributed based on the normalization strategy.
+    ###
     segmentCount = segmentCount || Math.ceil(@length / (segmentLength || 1))
 
     switch method
