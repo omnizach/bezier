@@ -1,0 +1,24 @@
+{
+  "name": "bezier",
+  "version": "1.0.0",
+  "description": "Small library for manipulating and drawing Bezier curves",
+  "main": "bezier.js",
+  "scripts": {
+    "coffee:bezier": "coffee --compile --map bezier.coffee",
+    "uglify:bezier": "uglifyjs --compress --mangle --screw-ie8 --in-source-map bezier.js.map -o bezier.min.js bezier.js",
+    "combine": "cat bezier.coffee d3-plugin.coffee > bezier.d3.coffee",
+    "coffee:d3": "coffee --compile --map bezier.d3.coffee",
+    "uglify:d3": "uglifyjs --compress --mangle --screw-ie8 --in-source-map bezier.d3.js.map -o bezier.d3.min.js bezier.d3.js",
+
+    "prepublish": "npm run coffee:bezier && npm run uglify:bezier && npm run combine && npm run coffee:d3 && npm run uglify:d3",
+    "docs": "coffeedoc --renderer gfm --hide-private bezier.coffee",
+    "clean": "rm bezier.d3.coffee && rm *.js && rm *.map"
+  },
+  "author": "Zach Young",
+  "license": "MIT",
+  "devDependencies": {
+    "coffee": "^3.0.3",
+    "coffeedoc": "^0.3.1",
+    "uglify-js": "^2.6.1"
+  }
+}
