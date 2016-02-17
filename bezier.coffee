@@ -35,6 +35,10 @@ class Point
     ###
     * x: Number. The x coordinate
     * y: Number. The y coordinate
+
+    ```
+    var p = new Point(35, 27); // { x: 35, y: 27 }
+    ```
     ###
 
 
