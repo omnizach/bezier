@@ -23,6 +23,8 @@ If you use [D3](https://d3js.org/), use `bezier.d3.min.js`, which includes a D3 
 
 ## Examples
 
+* [Gradient Along Stroke](http://bl.ocks.org/omnizach/0f93ca731883d601a114)
+
 ## API
 
 ### <a name="Point">[Point](Point)</a>
