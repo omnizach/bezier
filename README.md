@@ -15,105 +15,11 @@ Then, reference the script in html:
 <script src="bower_components/bezier/bezier.min.js"></script>
 ```
 
-## Files
-
-| File             | Description |
-| ---------------- | ----------- |
-| bezier.coffee    | Source file for `Point`, `Curve`, and `Spline`. |
-| bezier.js        | Raw js of coffee source. |
-| bezier.js.map    | Map file for bezier.js |
-| bezier.min.js    | Minified bezier.js. |
-
 ## Examples
 
 * [Gradient Along Stroke](http://bl.ocks.org/omnizach/0f93ca731883d601a114)
 
 ## API
-
-### Point</a>
-
-A Point object represents a location in space or a vector.
-
-#### new Point(x, y)
-* `x`: Number. The x coordinate
-* `y`: Number. The y coordinate
-
-##### Example
-```
-var p = new Point(35, 27); // { x: 35, y: 27 }
-```
-
-### Curve
-
-A `Curve` represents one segment of a spline.
-
-#### new Curve(p0, p1, p2, p3)
-* `p0`: Point. start point
-* `p1`: Point. control point 1
-* `p2`: Point. control point 2
-* `p3`: Point. end point
-
-##### Example
-```
-var c = new Curve(new Point(10,10), new Point(20,10), new Point(20,20), new Point(10,20));
-```
-
-#### lengthAt(t)
-Computes the length at position t of the curve.
-
-* `t`: Number. The portion of the curve to consider. The curve starts at t=0 and ends at t=1.
-* Returns number, the length value.
-
-
-#### point(t)
-Computes the point at position t of the curve.
-
-* `t`: number. The portion of the curve to consider. The curve starts at t=0 and ends at t=1.
-* Returns: Point, the location point.
-
-
-#### pointAtLength(z)
-Computes the point at a length of the curve.
-
-* `z`: number. The length of the curve to travel.
-* Returns: Point the location point.
-
-
-#### firstDerivative(t)
-Computes the first derivative at position t of the curve.
-
-* `t`: number. The point of the curve to consider. The curve starts at t=0 and ends at t=1.
-* Returns: Point, The derivative as a vector.
-
-
-#### secondDerivative(t)
-Computes the second derivative at position t of the curve.
-
-* `t`: number. The point of the curve to consider. The curve starts at t=0 and ends at t=1.
-* Returns: Point. The second derivative as a vector.
-
-
-#### curvature(t)
-Computes the curvature at position t of the curve. Curvature is 1/R where R is the instantaneous
-radius of the curve.
-
-* `t`: number. The point of the curve to consider. The curve starts at t=0 and ends at t=1.
-* Returns: number, The curvature value.
-
-
-#### tangent(t)
-Computes the tangent at position t of the curve.
-
-* `t`: number. The point of the curve to consider. The curve starts at t=0 and ends at t=1.
-* Returns: Point. The tangent as a vector.
-
-
-#### normal(t)
-Computes the normal at position t of the curve.
-
-* `t`: number The point of the curve to consider. The curve starts at t=0 and ends at t=1.
-* Returns: Point. The normal as a vector.
-
 
 ### Spline
 
@@ -199,9 +105,118 @@ smooth curve-to-curve and for all the functions that take a `t` value to approxi
 properties or make drawing easier.
   * length: recompute the spline so that each curve is approximately the same length.
   * x: recompute the curve so that the x values are evenly distributed. Useful for when the knots define a function of y in terms of x coordinates.
-* `segmentLength`: number. Defatul 1. If normalizing, sets the step interval for how close the normalized knot points should be.
+* `segmentLength`: number. Default 1. If normalizing, sets the step interval for how close the normalized knot points should be.
 * `segmentCount`: number. If normalizing, sets the number of knot points to use, evenly distributed based on the normalization strategy.
 
+### Curve
+
+A `Curve` represents one segment of a spline. You generally shouldn't need to create Curves directly, that's Spline's job.
+
+#### Curve.penPath
+
+Static function that will draw the curve using the SVG path mini-language. It's useful as a map function over a Spline's curves.
+
+#### Curve.paintPath
+
+* w: number. The width of each segment.
+
+Static function factory that will draw the curve as a wedge that can be filled, using the SVG path mini-language.
+It's useful as a map function over a Spline's curves.
+
+Example using D3:
+
+```
+var path = bezier.Curve.paintPath(50); // each segment will have width 50
+
+var spline = new bezier.Spline(points);
+
+d3.selectAll('.curve')
+  .data(spline.curves)
+    .enter()
+    .append('path')
+    .attr('d', path);
+```
+
+#### new Curve(p0, p1, p2, p3)
+* `p0`: Point. start point
+* `p1`: Point. control point 1
+* `p2`: Point. control point 2
+* `p3`: Point. end point
+
+##### Example
+```
+var c = new Curve(new Point(10,10), new Point(20,10), new Point(20,20), new Point(10,20));
+```
+
+#### lengthAt(t)
+Computes the length at position t of the curve.
+
+* `t`: Number. The portion of the curve to consider. The curve starts at t=0 and ends at t=1.
+* Returns number, the length value.
+
+
+#### point(t)
+Computes the point at position t of the curve.
+
+* `t`: number. The portion of the curve to consider. The curve starts at t=0 and ends at t=1.
+* Returns: Point, the location point.
+
+
+#### pointAtLength(z)
+Computes the point at a length of the curve.
+
+* `z`: number. The length of the curve to travel.
+* Returns: Point the location point.
+
+
+#### firstDerivative(t)
+Computes the first derivative at position t of the curve.
+
+* `t`: number. The point of the curve to consider. The curve starts at t=0 and ends at t=1.
+* Returns: Point, The derivative as a vector.
+
+
+#### secondDerivative(t)
+Computes the second derivative at position t of the curve.
+
+* `t`: number. The point of the curve to consider. The curve starts at t=0 and ends at t=1.
+* Returns: Point. The second derivative as a vector.
+
+
+#### curvature(t)
+Computes the curvature at position t of the curve. Curvature is 1/R where R is the instantaneous
+radius of the curve.
+
+* `t`: number. The point of the curve to consider. The curve starts at t=0 and ends at t=1.
+* Returns: number, The curvature value.
+
+
+#### tangent(t)
+Computes the tangent at position t of the curve.
+
+* `t`: number. The point of the curve to consider. The curve starts at t=0 and ends at t=1.
+* Returns: Point. The tangent as a vector.
+
+
+#### normal(t)
+Computes the normal at position t of the curve.
+
+* `t`: number The point of the curve to consider. The curve starts at t=0 and ends at t=1.
+* Returns: Point. The normal as a vector.
+
+### Point</a>
+
+A Point object represents a location in space or a vector. It exists mainly for documentation and
+any object that conforms to `{ x: (number), y: (number) }` will work.
+
+#### new Point(x, y)
+* `x`: Number. The x coordinate
+* `y`: Number. The y coordinate
+
+##### Example
+```
+var p = new Point(35, 27); // { x: 35, y: 27 }
+```
 
 ## Credits
 

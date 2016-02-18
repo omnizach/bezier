@@ -53,12 +53,35 @@ class Curve
     return t * t2 - 3 * p1 + 3 * p2;
 
   @penPath = (c) ->
+    ###
+    Static function that will draw the curve using the SVG path mini-language. It's useful as a map function over a Spline's curves.
+    ###
     "M #{ c.p0.x }, #{ c.p0.y }
      C #{ c.p1.x }, #{ c.p1.y }
        #{ c.p2.x }, #{ c.p2.y }
        #{ c.p3.x }, #{ c.p3.y }"
 
   @paintPath = (w) ->
+    ###
+    * w: number. The width of each segment.
+
+    Static function factory that will draw the curve as a wedge that can be filled, using the SVG path mini-language.
+    It's useful as a map function over a Spline's curves.
+
+    Example using D3:
+
+    ```
+    var path = bezier.Curve.paintPath(50); // each segment will have width 50
+
+    var spline = new bezier.Spline(points);
+
+    d3.selectAll('.curve')
+      .data(spline.curves)
+        .enter()
+        .append('path')
+        .attr('d', path);
+    ```
+    ###
     w2 = w / 2
     (c) ->
       n0 = c.normal(0)
@@ -278,13 +301,11 @@ class Spline
 
       c
 
-  constructor: (knots, closed) ->
+  constructor: (knots, @closed = false) ->
     ###
-
     * knots: Point[]. Array of points that the spline passes through. A curve is generated connecting each knot point to the next.
     * closed: Boolean. Default false. Indicates that the spline should connect its end point back to its start point, making a loop.
     ###
-    @closed = closed;
     @curves = Spline.computeSpline(knots.map((p) -> p.x), knots.map((p) -> p.y), closed);
     @startLengths = (c.startLength for c in @curves)
     @endLengths = (c.endLength for c in @curves)
