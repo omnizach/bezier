@@ -24,14 +24,14 @@ Function::_getter = (prop, get) ->
   ### Utility function for defining object property getter. ###
   Object.defineProperty @prototype, prop, {get, configurable: yes}
 
-Function::_setter = (prop, set) ->
-  ### Utility function for defining object property setter. ###
-  Object.defineProperty @prototype, prop, {set, configurable: yes}
+#Function::_setter = (prop, set) ->
+#  ### Utility function for defining object property setter. ###
+#  Object.defineProperty @prototype, prop, {set, configurable: yes}
 
 class Point
   ### A Point object represents a location in space or a vector. ###
 
-  constructor: (@x, @y) ->
+  constructor: (x, y) ->
     ###
     * x: Number. The x coordinate
     * y: Number. The y coordinate
@@ -40,6 +40,9 @@ class Point
     var p = new Point(35, 27); // { x: 35, y: 27 }
     ```
     ###
+    return new Point(x, y) unless this instanceof Point
+    @x = x
+    @y = y
 
 
 class Curve
@@ -92,13 +95,18 @@ class Curve
        L #{ c.p3.x + n3.x*w2 }, #{ c.p3.y + n3.y*w2 }
        L #{ c.p3.x - n3.x*w2 }, #{ c.p3.y - n3.y*w2 } Z"
 
-  constructor: (@p0, @p1, @p2, @p3) ->
+  constructor: (p0, p1, p2, p3) ->
     ###
     * p0: Point. start point
     * p1: Point. control point 1
     * p2: Point. control point 2
     * p3: Point. end point
     ###
+    return new Curve(p0, p1, p2, p3) unless this instanceof Curve
+    @p0 = p0
+    @p1 = p1
+    @p2 = p2
+    @p3 = p3
 
   _findT: (target, guess) ->
     target = Math.min(target, @length)
@@ -301,11 +309,13 @@ class Spline
 
       c
 
-  constructor: (knots, @closed = false) ->
+  constructor: (knots, closed = false) ->
     ###
     * knots: Point[]. Array of points that the spline passes through. A curve is generated connecting each knot point to the next.
     * closed: Boolean. Default false. Indicates that the spline should connect its end point back to its start point, making a loop.
     ###
+    return new Spline(knots, closed) unless this instanceof Spline
+    @closed = closed
     @curves = Spline.computeSpline(knots.map((p) -> p.x), knots.map((p) -> p.y), closed);
     @startLengths = (c.startLength for c in @curves)
     @endLengths = (c.endLength for c in @curves)

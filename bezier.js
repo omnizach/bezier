@@ -57,21 +57,10 @@ A library for generating smooth Bezier curves and splines. This contains extra f
     });
   };
 
-  Function.prototype._setter = function(prop, set) {
-
-    /* Utility function for defining object property setter. */
-    return Object.defineProperty(this.prototype, prop, {
-      set: set,
-      configurable: true
-    });
-  };
-
   Point = (function() {
 
     /* A Point object represents a location in space or a vector. */
     function Point(x, y) {
-      this.x = x;
-      this.y = y;
 
       /*
       * x: Number. The x coordinate
@@ -81,6 +70,11 @@ A library for generating smooth Bezier curves and splines. This contains extra f
       var p = new Point(35, 27); // { x: 35, y: 27 }
       ```
        */
+      if (!(this instanceof Point)) {
+        return new Point(x, y);
+      }
+      this.x = x;
+      this.y = y;
     }
 
     return Point;
@@ -100,10 +94,35 @@ A library for generating smooth Bezier curves and splines. This contains extra f
     };
 
     Curve.penPath = function(c) {
+
+      /*
+      Static function that will draw the curve using the SVG path mini-language. It's useful as a map function over a Spline's curves.
+       */
       return "M " + c.p0.x + ", " + c.p0.y + " C " + c.p1.x + ", " + c.p1.y + " " + c.p2.x + ", " + c.p2.y + " " + c.p3.x + ", " + c.p3.y;
     };
 
     Curve.paintPath = function(w) {
+
+      /*
+      * w: number. The width of each segment.
+      
+      Static function factory that will draw the curve as a wedge that can be filled, using the SVG path mini-language.
+      It's useful as a map function over a Spline's curves.
+      
+      Example using D3:
+      
+      ```
+      var path = bezier.Curve.paintPath(50); // each segment will have width 50
+      
+      var spline = new bezier.Spline(points);
+      
+      d3.selectAll('.curve')
+        .data(spline.curves)
+          .enter()
+          .append('path')
+          .attr('d', path);
+      ```
+       */
       var w2;
       w2 = w / 2;
       return function(c) {
@@ -114,11 +133,7 @@ A library for generating smooth Bezier curves and splines. This contains extra f
       };
     };
 
-    function Curve(p0, p11, p21, p31) {
-      this.p0 = p0;
-      this.p1 = p11;
-      this.p2 = p21;
-      this.p3 = p31;
+    function Curve(p0, p1, p2, p3) {
 
       /*
       * p0: Point. start point
@@ -126,6 +141,13 @@ A library for generating smooth Bezier curves and splines. This contains extra f
       * p2: Point. control point 2
       * p3: Point. end point
        */
+      if (!(this instanceof Curve)) {
+        return new Curve(p0, p1, p2, p3);
+      }
+      this.p0 = p0;
+      this.p1 = p1;
+      this.p2 = p2;
+      this.p3 = p3;
     }
 
     Curve.prototype._findT = function(target, guess) {
@@ -383,13 +405,18 @@ A library for generating smooth Bezier curves and splines. This contains extra f
     };
 
     function Spline(knots, closed) {
+      var c;
+      if (closed == null) {
+        closed = false;
+      }
 
       /*
-      
       * knots: Point[]. Array of points that the spline passes through. A curve is generated connecting each knot point to the next.
       * closed: Boolean. Default false. Indicates that the spline should connect its end point back to its start point, making a loop.
        */
-      var c;
+      if (!(this instanceof Spline)) {
+        return new Spline(knots, closed);
+      }
       this.closed = closed;
       this.curves = Spline.computeSpline(knots.map(function(p) {
         return p.x;
