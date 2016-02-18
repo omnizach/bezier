@@ -35,6 +35,10 @@ class Point
     ###
     * x: Number. The x coordinate
     * y: Number. The y coordinate
+
+    ```
+    var p = new Point(35, 27); // { x: 35, y: 27 }
+    ```
     ###
 
 
@@ -426,6 +430,7 @@ d3.bezier = ->
   segmentLength = 10
   segmentCount = 1
   drawSegment = drawPath
+  fill = 'none'
 
   my = (selection) ->
     selection.each (data) ->
@@ -441,7 +446,7 @@ d3.bezier = ->
         .enter()
         .append('path')
         .attr('d', drawSegment)
-        .style('fill', 'none') #color)
+        .style('fill', fill)
         .style('stroke', color)
 
   ###
@@ -465,6 +470,8 @@ d3.bezier = ->
   my.segmentLength = (_) -> if !arguments.length then segmentLength else segmentLength = _; segmentCount = undefined; my
 
   my.segmentCount = (_) -> if !arguments.length then segmentCount else segmentCount = _; segmentLength = undefined; my
+
+  my.fill = (_) -> if !arguments.length then fill else fill = _; my
 
   my.drawSegment = (_) ->
     if !arguments.length

@@ -76,6 +76,10 @@ A library for generating smooth Bezier curves and splines. This contains extra f
       /*
       * x: Number. The x coordinate
       * y: Number. The y coordinate
+      
+      ```
+      var p = new Point(35, 27); // { x: 35, y: 27 }
+      ```
        */
     }
 
@@ -561,7 +565,7 @@ A library for generating smooth Bezier curves and splines. This contains extra f
   })();
 
   d3.bezier = function() {
-    var closed, color, colorScale, drawPath, drawSegment, my, normalize, paintPath, segmentCount, segmentLength, width, x, y;
+    var closed, color, colorScale, drawPath, drawSegment, fill, my, normalize, paintPath, segmentCount, segmentLength, width, x, y;
     paintPath = function(c) {
       var n0, n3, w;
       w = width(c) / 2;
@@ -590,6 +594,7 @@ A library for generating smooth Bezier curves and splines. This contains extra f
     segmentLength = 10;
     segmentCount = 1;
     drawSegment = drawPath;
+    fill = 'none';
     my = function(selection) {
       return selection.each(function(data) {
         var g, knots, spline;
@@ -601,7 +606,7 @@ A library for generating smooth Bezier curves and splines. This contains extra f
         });
         spline = (new BezierSpline(knots, closed)).normalize(normalize, segmentLength, segmentCount);
         g = d3.select(this).append('g').classed('bezier-path', true).datum(spline);
-        return g.selectAll('path').data(spline.curves).enter().append('path').attr('d', drawSegment).style('fill', 'none').style('stroke', color);
+        return g.selectAll('path').data(spline.curves).enter().append('path').attr('d', drawSegment).style('fill', fill).style('stroke', color);
       });
     };
 
@@ -674,6 +679,14 @@ A library for generating smooth Bezier curves and splines. This contains extra f
       } else {
         segmentCount = _;
         segmentLength = void 0;
+        return my;
+      }
+    };
+    my.fill = function(_) {
+      if (!arguments.length) {
+        return fill;
+      } else {
+        fill = _;
         return my;
       }
     };
