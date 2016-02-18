@@ -18,6 +18,7 @@ Then, reference the script in html:
 ## Examples
 
 * [Gradient Along Stroke](http://bl.ocks.org/omnizach/0f93ca731883d601a114)
+* [Rainbow Circle](http://bl.ocks.org/omnizach/209cf70cd9a377f5c224)
 
 ## API
 
