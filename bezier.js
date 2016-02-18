@@ -15,7 +15,7 @@ A library for generating smooth Bezier curves and splines. This contains extra f
  */
 
 (function() {
-  var BezierCurve, BezierSpline, Point, _zip,
+  var Curve, Point, Spline, _zip,
     modulo = function(a, b) { return (+a % (b = +b) + b) % b; },
     slice = [].slice;
 
@@ -87,19 +87,34 @@ A library for generating smooth Bezier curves and splines. This contains extra f
 
   })();
 
-  BezierCurve = (function() {
+  Curve = (function() {
 
     /*
-    A BezierCurve represents one segment of a spline.
+    A Curve represents one segment of a spline.
      */
-    BezierCurve._base3 = function(t, p1, p2, p3, p4) {
+    Curve._base3 = function(t, p1, p2, p3, p4) {
       var t1, t2;
       t1 = -3 * p1 + 9 * p2 - 9 * p3 + 3 * p4;
       t2 = t * t1 + 6 * p1 - 12 * p2 + 6 * p3;
       return t * t2 - 3 * p1 + 3 * p2;
     };
 
-    function BezierCurve(p0, p11, p21, p31) {
+    Curve.penPath = function(c) {
+      return "M " + c.p0.x + ", " + c.p0.y + " C " + c.p1.x + ", " + c.p1.y + " " + c.p2.x + ", " + c.p2.y + " " + c.p3.x + ", " + c.p3.y;
+    };
+
+    Curve.paintPath = function(w) {
+      var w2;
+      w2 = w / 2;
+      return function(c) {
+        var n0, n3;
+        n0 = c.normal(0);
+        n3 = c.normal(1);
+        return "M " + (c.p0.x - n0.x * w2) + ", " + (c.p0.y - n0.y * w2) + " L " + (c.p0.x + n0.x * w2) + ", " + (c.p0.y + n0.y * w2) + " L " + (c.p3.x + n3.x * w2) + ", " + (c.p3.y + n3.y * w2) + " L " + (c.p3.x - n3.x * w2) + ", " + (c.p3.y - n3.y * w2) + " Z";
+      };
+    };
+
+    function Curve(p0, p11, p21, p31) {
       this.p0 = p0;
       this.p1 = p11;
       this.p2 = p21;
@@ -113,7 +128,7 @@ A library for generating smooth Bezier curves and splines. This contains extra f
        */
     }
 
-    BezierCurve.prototype._findT = function(target, guess) {
+    Curve.prototype._findT = function(target, guess) {
       var error;
       target = Math.min(target, this.length);
       guess = guess || target / this.length;
@@ -125,7 +140,7 @@ A library for generating smooth Bezier curves and splines. This contains extra f
       }
     };
 
-    BezierCurve.prototype.lengthAt = function(t) {
+    Curve.prototype.lengthAt = function(t) {
       var integrate, t2;
       if (t == null) {
         t = 1;
@@ -142,14 +157,14 @@ A library for generating smooth Bezier curves and splines. This contains extra f
       integrate = function(d) {
         var ct;
         ct = t2 * d[0] + t2;
-        return d[1] * Math.sqrt(Math.pow(BezierCurve._base3(ct, this.p0.x, this.p1.x, this.p2.x, this.p3.x), 2) + Math.pow(BezierCurve._base3(ct, this.p0.y, this.p1.y, this.p2.y, this.p3.y), 2));
+        return d[1] * Math.sqrt(Math.pow(Curve._base3(ct, this.p0.x, this.p1.x, this.p2.x, this.p3.x), 2) + Math.pow(Curve._base3(ct, this.p0.y, this.p1.y, this.p2.y, this.p3.y), 2));
       };
       return t2 * [[-0.1252, 0.2491], [0.1252, 0.2491], [-0.3678, 0.2335], [0.3678, 0.2335], [-0.5873, 0.2032], [0.5873, 0.2032], [-0.7699, 0.1601], [0.7699, 0.1601], [-0.9041, 0.1069], [0.9041, 0.1069], [-0.9816, 0.0472], [0.9816, 0.0472]].map(integrate, this).reduce(function(p, c) {
         return p + c;
       });
     };
 
-    BezierCurve._getter('length', function() {
+    Curve._getter('length', function() {
       return this._length != null ? this._length : this._length = this.lengthAt(1);
     });
 
@@ -158,7 +173,7 @@ A library for generating smooth Bezier curves and splines. This contains extra f
     The full length of the curve
      */
 
-    BezierCurve.prototype.point = function(t) {
+    Curve.prototype.point = function(t) {
 
       /*
       Computes the point at position t of the curve.
@@ -169,7 +184,7 @@ A library for generating smooth Bezier curves and splines. This contains extra f
       return new Point(Math.pow(1 - t, 3) * this.p0.x + 3 * Math.pow(1 - t, 2) * t * this.p1.x + 3 * (1 - t) * Math.pow(t, 2) * this.p2.x + Math.pow(t, 3) * this.p3.x, Math.pow(1 - t, 3) * this.p0.y + 3 * Math.pow(1 - t, 2) * t * this.p1.y + 3 * (1 - t) * Math.pow(t, 2) * this.p2.y + Math.pow(t, 3) * this.p3.y);
     };
 
-    BezierCurve.prototype.pointAtLength = function(z) {
+    Curve.prototype.pointAtLength = function(z) {
 
       /*
       Computes the point at a length of the curve.
@@ -180,7 +195,7 @@ A library for generating smooth Bezier curves and splines. This contains extra f
       return this.point(this._findT(z));
     };
 
-    BezierCurve.prototype.firstDerivative = function(t) {
+    Curve.prototype.firstDerivative = function(t) {
 
       /*
       Computes the first derivative at position t of the curve.
@@ -191,7 +206,7 @@ A library for generating smooth Bezier curves and splines. This contains extra f
       return new Point(3 * Math.pow(1 - t, 2) * (this.p1.x - this.p0.x) + 6 * (1 - t) * t * (this.p2.x - this.p1.x) + 3 * Math.pow(t, 2) * (this.p3.x - this.p2.x), 3 * Math.pow(1 - t, 2) * (this.p1.y - this.p0.y) + 6 * (1 - t) * t * (this.p2.y - this.p1.y) + 3 * Math.pow(t, 2) * (this.p3.y - this.p2.y));
     };
 
-    BezierCurve.prototype.secondDerivative = function(t) {
+    Curve.prototype.secondDerivative = function(t) {
 
       /*
       Computes the second derivative at position t of the curve.
@@ -202,7 +217,7 @@ A library for generating smooth Bezier curves and splines. This contains extra f
       return new Point(6 * (1 - t) * (this.p2.x - 2 * this.p1.x + this.p0.x) + 6 * t * (this.p3.x - 2 * this.p2.x + this.p2.x), 6 * (1 - t) * (this.p2.y - 2 * this.p1.y + this.p0.y) + 6 * t * (this.p3.y - 2 * this.p2.y + this.p2.y));
     };
 
-    BezierCurve.prototype.curvature = function(t) {
+    Curve.prototype.curvature = function(t) {
 
       /*
       Computes the curvature at position t of the curve. Curvature is 1/R where R is the instantaneous
@@ -217,7 +232,7 @@ A library for generating smooth Bezier curves and splines. This contains extra f
       return (d1.x * d2.y - d1.y * d2.x) / Math.pow(d1.x * d1.x + d1.y * d1.y, 1.5);
     };
 
-    BezierCurve.prototype.tangent = function(t) {
+    Curve.prototype.tangent = function(t) {
 
       /*
       Computes the tangent at position t of the curve.
@@ -231,7 +246,7 @@ A library for generating smooth Bezier curves and splines. This contains extra f
       return new Point(d1.x / d, d1.y / d);
     };
 
-    BezierCurve.prototype.normal = function(t) {
+    Curve.prototype.normal = function(t) {
 
       /*
       Computes the normal at position t of the curve.
@@ -244,21 +259,21 @@ A library for generating smooth Bezier curves and splines. This contains extra f
       return new Point(-tan.y, tan.x);
     };
 
-    return BezierCurve;
+    return Curve;
 
   })();
 
-  BezierSpline = (function() {
+  Spline = (function() {
 
     /*
-    A series of BezierCurve's that connect end-to-end, smoothly transitioning from one to the next.
+    A series of Curve's that connect end-to-end, smoothly transitioning from one to the next.
     
-    * curves: BezierCurve[]. List of curves that make up the spline
+    * curves: Curve[]. List of curves that make up the spline
     * startLengths: number[]. The length of the whole spline up to the start of each segment curve
     * endLengths: number[]. The length of the whole spline up to the end of each segment curve
     * length: number. The length of the entire spline
      */
-    BezierSpline.computeControlPoints = function(k) {
+    Spline.computeControlPoints = function(k) {
       var a, b, c, i, j, l, m, n, o, p1, p2, r, ref, ref1, ref2;
       a = function(i) {
         if (i <= 0) {
@@ -318,7 +333,7 @@ A library for generating smooth Bezier curves and splines. This contains extra f
       };
     };
 
-    BezierSpline.computeBezierSpline = function(xs, ys, closed) {
+    Spline.computeSpline = function(xs, ys, closed) {
       var c, cx, cy, extend, extendLeft, extendRight, i, j, len, p0x, p0y, p1x, p1y, p2x, p2y, p3x, p3y, ref, ref1, results, startLength;
       extend = 12;
       if (closed) {
@@ -341,8 +356,8 @@ A library for generating smooth Bezier curves and splines. This contains extra f
         xs = slice.call(extendLeft(xs)).concat(slice.call(xs), slice.call(extendRight(xs)));
         ys = slice.call(extendLeft(ys)).concat(slice.call(ys), slice.call(extendRight(ys)));
       }
-      cx = BezierSpline.computeControlPoints(xs);
-      cy = BezierSpline.computeControlPoints(ys);
+      cx = Spline.computeControlPoints(xs);
+      cy = Spline.computeControlPoints(ys);
       startLength = 0;
       if (closed) {
         xs = xs.slice(extend, +(-extend) + 1 || 9e9);
@@ -356,7 +371,7 @@ A library for generating smooth Bezier curves and splines. This contains extra f
       results = [];
       for (i = j = 0, len = ref.length; j < len; i = ++j) {
         ref1 = ref[i], p0x = ref1[0], p0y = ref1[1], p1x = ref1[2], p1y = ref1[3], p2x = ref1[4], p2y = ref1[5], p3x = ref1[6], p3y = ref1[7];
-        c = new BezierCurve(new Point(p0x, p0y), new Point(p1x, p1y), new Point(p2x, p2y), new Point(p3x, p3y));
+        c = new Curve(new Point(p0x, p0y), new Point(p1x, p1y), new Point(p2x, p2y), new Point(p3x, p3y));
         c.startLength = startLength;
         c.endLength = startLength + c.length;
         c.segmentOffset = i / (xs.length - 1);
@@ -367,7 +382,7 @@ A library for generating smooth Bezier curves and splines. This contains extra f
       return results;
     };
 
-    function BezierSpline(knots, closed) {
+    function Spline(knots, closed) {
 
       /*
       
@@ -376,7 +391,7 @@ A library for generating smooth Bezier curves and splines. This contains extra f
        */
       var c;
       this.closed = closed;
-      this.curves = BezierSpline.computeBezierSpline(knots.map(function(p) {
+      this.curves = Spline.computeSpline(knots.map(function(p) {
         return p.x;
       }), knots.map(function(p) {
         return p.y;
@@ -404,7 +419,7 @@ A library for generating smooth Bezier curves and splines. This contains extra f
       this.length = this.endLengths.slice(-1)[0];
     }
 
-    BezierSpline.prototype._curveIndex = function(t) {
+    Spline.prototype._curveIndex = function(t) {
       var i;
       i = Math.trunc(t);
       t = t % 1;
@@ -423,7 +438,7 @@ A library for generating smooth Bezier curves and splines. This contains extra f
       }
     };
 
-    BezierSpline.prototype.point = function(t) {
+    Spline.prototype.point = function(t) {
 
       /*
       Computes the point at position t of the curve.
@@ -436,7 +451,7 @@ A library for generating smooth Bezier curves and splines. This contains extra f
       return this.curves[a.i].point(a.t);
     };
 
-    BezierSpline.prototype.pointAtLength = function(z) {
+    Spline.prototype.pointAtLength = function(z) {
 
       /*
       Computes the point at length z of the curve.
@@ -461,7 +476,7 @@ A library for generating smooth Bezier curves and splines. This contains extra f
       return this.curves[i].pointAtLength(z - this.startLengths[i]);
     };
 
-    BezierSpline.prototype.firstDerivative = function(t) {
+    Spline.prototype.firstDerivative = function(t) {
 
       /*
       Computes the first derivative at position t of the curve.
@@ -474,7 +489,7 @@ A library for generating smooth Bezier curves and splines. This contains extra f
       return this.curves[a.i].firstDerivative(a.t);
     };
 
-    BezierSpline.prototype.secondDerivative = function(t) {
+    Spline.prototype.secondDerivative = function(t) {
 
       /*
       Computes the second derivative at position t of the curve.
@@ -487,7 +502,7 @@ A library for generating smooth Bezier curves and splines. This contains extra f
       return this.curves[a.i].secondDerivative(a.t);
     };
 
-    BezierSpline.prototype.curvature = function(t) {
+    Spline.prototype.curvature = function(t) {
 
       /*
       Computes the curvature at position t of the curve. Curvature is 1/R where R is the instantaneous
@@ -501,7 +516,7 @@ A library for generating smooth Bezier curves and splines. This contains extra f
       return this.curves[a.i].curvature(a.t);
     };
 
-    BezierSpline.prototype.tangent = function(t) {
+    Spline.prototype.tangent = function(t) {
 
       /*
       Computes the tangent at position t of the curve.
@@ -514,7 +529,7 @@ A library for generating smooth Bezier curves and splines. This contains extra f
       return this.curves[a.i].tangent(a.t);
     };
 
-    BezierSpline.prototype.normal = function(t) {
+    Spline.prototype.normal = function(t) {
 
       /*
       Computes the normal at position t of the curve.
@@ -527,10 +542,10 @@ A library for generating smooth Bezier curves and splines. This contains extra f
       return this.curves[a.i].normal(a.t);
     };
 
-    BezierSpline.prototype.normalize = function(method, segmentLength, segmentCount) {
+    Spline.prototype.normalize = function(method, segmentLength, segmentCount) {
 
       /*
-      Produces a new BezierSpline with the points normalized.
+      Produces a new Spline with the points normalized.
       
       * method: ('length', 'x'). Default 'length'. Option to indicate if the spline should be recomputed to smooth out numerical
       properties or make drawing easier.
@@ -552,7 +567,7 @@ A library for generating smooth Bezier curves and splines. This contains extra f
             }
             return results;
           }).call(this);
-          return new BezierSpline(ps, this.closed);
+          return new Spline(ps, this.closed);
         case 'x':
           return this;
         default:
@@ -560,9 +575,15 @@ A library for generating smooth Bezier curves and splines. This contains extra f
       }
     };
 
-    return BezierSpline;
+    return Spline;
 
   })();
+
+  this.bezier = {
+    Point: Point,
+    Curve: Curve,
+    Spline: Spline
+  };
 
 }).call(this);
 

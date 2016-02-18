@@ -1,25 +1,28 @@
 # Bezier
 This is a small library that provides additional functionality for drawing [Bezier curves](https://en.wikipedia.org/wiki/B%C3%A9zier_curve).
 
-For no external dependencies, use `bezier.min.js`.
-
-If you use [D3](https://d3js.org/), use `bezier.d3.min.js`, which includes a D3 plugin.
-
 ## Getting Started
+
+Install via [Bower](http://bower.io/):
+
+```
+bower install bezier --save
+```
+
+Then, reference the script in html:
+
+```
+<script src="bower_components/bezier/bezier.min.js"></script>
+```
 
 ## Files
 
 | File             | Description |
 | ---------------- | ----------- |
-| bezier.coffee    | Source file for `Point`, `BezierCurve`, and `BezierSpline`. |
+| bezier.coffee    | Source file for `Point`, `Curve`, and `Spline`. |
 | bezier.js        | Raw js of coffee source. |
 | bezier.js.map    | Map file for bezier.js |
 | bezier.min.js    | Minified bezier.js. |
-| d3-plugin.coffee | Source file for `d3.bezier` extension for [d3](https://d3js.org/). |
-| bezier.d3.coffee | Combined source file of bezier.coffee and d3-plugin.coffee |
-| bezier.d3.js     | Full `.js` file for core and d3 functions. |
-| bezier.d3.js.map | Map file for bezier.d3.js |
-| bezier.d3.min.js | Minified version of bezier.d3.js |
 
 ## Examples
 
@@ -27,7 +30,7 @@ If you use [D3](https://d3js.org/), use `bezier.d3.min.js`, which includes a D3 
 
 ## API
 
-### <a name="Point">[Point](Point)</a>
+### Point</a>
 
 A Point object represents a location in space or a vector.
 
@@ -40,19 +43,19 @@ A Point object represents a location in space or a vector.
 var p = new Point(35, 27); // { x: 35, y: 27 }
 ```
 
-### <a name="BezierCurve">[BezierCurve](BezierCurve)</a>
+### Curve
 
-A `BezierCurve` represents one segment of a spline.
+A `Curve` represents one segment of a spline.
 
-#### new BezierCurve(p0, p1, p2, p3)
-* `p0`: [Point](Point). start point
-* `p1`: [Point](Point). control point 1
-* `p2`: [Point](Point). control point 2
-* `p3`: [Point](Point). end point
+#### new Curve(p0, p1, p2, p3)
+* `p0`: Point. start point
+* `p1`: Point. control point 1
+* `p2`: Point. control point 2
+* `p3`: Point. end point
 
 ##### Example
 ```
-var c = new BezierCurve(new Point(10,10), new Point(10,10), new Point(10,10), new Point(10,10));
+var c = new Curve(new Point(10,10), new Point(20,10), new Point(20,20), new Point(10,20));
 ```
 
 #### lengthAt(t)
@@ -66,28 +69,28 @@ Computes the length at position t of the curve.
 Computes the point at position t of the curve.
 
 * `t`: number. The portion of the curve to consider. The curve starts at t=0 and ends at t=1.
-* Returns: [Point](Point), the location point.
+* Returns: Point, the location point.
 
 
 #### pointAtLength(z)
 Computes the point at a length of the curve.
 
 * `z`: number. The length of the curve to travel.
-* Returns: [Point](Point) the location point.
+* Returns: Point the location point.
 
 
 #### firstDerivative(t)
 Computes the first derivative at position t of the curve.
 
 * `t`: number. The point of the curve to consider. The curve starts at t=0 and ends at t=1.
-* Returns: [Point](Point), The derivative as a vector.
+* Returns: Point, The derivative as a vector.
 
 
 #### secondDerivative(t)
 Computes the second derivative at position t of the curve.
 
 * `t`: number. The point of the curve to consider. The curve starts at t=0 and ends at t=1.
-* Returns: [Point](Point). The second derivative as a vector.
+* Returns: Point. The second derivative as a vector.
 
 
 #### curvature(t)
@@ -102,23 +105,23 @@ radius of the curve.
 Computes the tangent at position t of the curve.
 
 * `t`: number. The point of the curve to consider. The curve starts at t=0 and ends at t=1.
-* Returns: [Point](Point). The tangent as a vector.
+* Returns: Point. The tangent as a vector.
 
 
 #### normal(t)
 Computes the normal at position t of the curve.
 
 * `t`: number The point of the curve to consider. The curve starts at t=0 and ends at t=1.
-* Returns: [Point](Point). The normal as a vector.
+* Returns: Point. The normal as a vector.
 
 
-### <a name="BezierSpline">[BezierSpline](BezierSpline)</a>
+### Spline
 
-A series of [BezierCurve](BezierCurve)'s that connect end-to-end, smoothly transitioning from one to the next.
+A series of [Curve](Curve)'s that connect end-to-end, smoothly transitioning from one to the next.
 
 #### curves
 List of curves that make up the spline.
-`BezierCurve[]`
+`Curve[]`
 
 #### startLengths
 The length of the whole spline up to the start of each segment curve.
@@ -132,9 +135,9 @@ The length of the whole spline up to the end of each segment curve.
 The length of the entire spline.
 `number`
 
-#### new BezierSpline(knots, closed)
+#### new Spline(knots, closed)
 
-* `knots`: [Point](Point)[]. Array of points that the spline passes through. A curve is generated connecting each knot point to the next.
+* `knots`: Point[]. Array of points that the spline passes through. A curve is generated connecting each knot point to the next.
 * `closed`: Boolean. Default false. Indicates that the spline should connect its end point back to its start point, making a loop.
 
 
@@ -142,28 +145,28 @@ The length of the entire spline.
 Computes the point at position t of the curve.
 
 * `t` The portion of the curve to consider. The spline starts at t=0 and ends at t=curves.length.
-* Returns: [Point](Point). the location point.
+* Returns: Point. the location point.
 
 
 #### pointAtLength(z)
 Computes the point at length z of the curve.
 
 * `z` The length of the curve to travel.
-* Returns: [Point](Point). the location point.
+* Returns: Point. the location point.
 
 
 #### firstDerivative(t)
 Computes the first derivative at position t of the curve.
 
 * `t` The point of the curve to consider. The curve starts at t=0 and ends at t=curves.length.
-* Returns: [Point](Point). The derivative as a vector.
+* Returns: Point. The derivative as a vector.
 
 
 #### secondDerivative(t)
 Computes the second derivative at position t of the curve.
 
 * `t` The point of the curve to consider. The curve starts at t=0 and ends at t=curves.length.
-* Returns: [Point](Point). The second derivative as a vector.
+* Returns: Point. The second derivative as a vector.
 
 
 #### curvature(t)
@@ -178,18 +181,19 @@ radius of the curve.
 Computes the tangent at position t of the curve.
 
 * `t` The point of the curve to consider. The curve starts at t=0 and ends at t=curves.length.
-* Returns: [Point](Point). The tangent as a vector.
+* Returns: Point. The tangent as a vector.
 
 
 #### normal(t)
 Computes the normal at position t of the curve.
 
 * `t` The point of the curve to consider. The curve starts at t=0 and ends at t=curves.length.
-* Returns: [Point](Point). The normal as a vector.
+* Returns: Point. The normal as a vector.
 
 
 #### normalize(method, segmentLength, segmentCount)
-Produces a new [BezierSpline](BezierSpline) with the points normalized.
+Produces a new Spline with the points normalized. This is important to use if you want the derivatives to be
+smooth curve-to-curve and for all the functions that take a `t` value to approximate the length along the curve.
 
 * `method`: ('length', 'x'). Default 'length'. Option to indicate if the spline should be recomputed to smooth out numerical
 properties or make drawing easier.

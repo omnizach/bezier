@@ -42,15 +42,32 @@ class Point
     ###
 
 
-class BezierCurve
+class Curve
   ###
-  A BezierCurve represents one segment of a spline.
+  A Curve represents one segment of a spline.
   ###
 
   @_base3 = (t, p1, p2, p3, p4) ->
     t1 = -3 * p1 + 9 * p2 - 9 * p3 + 3 * p4
     t2 = t * t1 + 6 * p1 - 12 * p2 + 6 * p3
     return t * t2 - 3 * p1 + 3 * p2;
+
+  @penPath = (c) ->
+    "M #{ c.p0.x }, #{ c.p0.y }
+     C #{ c.p1.x }, #{ c.p1.y }
+       #{ c.p2.x }, #{ c.p2.y }
+       #{ c.p3.x }, #{ c.p3.y }"
+
+  @paintPath = (w) ->
+    w2 = w / 2
+    (c) ->
+      n0 = c.normal(0)
+      n3 = c.normal(1)
+
+      "M #{ c.p0.x - n0.x*w2 }, #{ c.p0.y - n0.y*w2 }
+       L #{ c.p0.x + n0.x*w2 }, #{ c.p0.y + n0.y*w2 }
+       L #{ c.p3.x + n3.x*w2 }, #{ c.p3.y + n3.y*w2 }
+       L #{ c.p3.x - n3.x*w2 }, #{ c.p3.y - n3.y*w2 } Z"
 
   constructor: (@p0, @p1, @p2, @p3) ->
     ###
@@ -84,8 +101,8 @@ class BezierCurve
 
     integrate = (d) ->
       ct = t2 * d[0] + t2
-      d[1] * Math.sqrt(BezierCurve._base3(ct, @p0.x, @p1.x, @p2.x, @p3.x) ** 2 +
-                       BezierCurve._base3(ct, @p0.y, @p1.y, @p2.y, @p3.y) ** 2)
+      d[1] * Math.sqrt(Curve._base3(ct, @p0.x, @p1.x, @p2.x, @p3.x) ** 2 +
+                       Curve._base3(ct, @p0.y, @p1.y, @p2.y, @p3.y) ** 2)
 
     t2 * [[-0.1252, 0.2491],[0.1252, 0.2491],[-0.3678, 0.2335],[0.3678, 0.2335],[-0.5873, 0.2032],
                  [0.5873, 0.2032],[-0.7699, 0.1601],[0.7699, 0.1601],[-0.9041, 0.1069],[0.9041, 0.1069],
@@ -183,11 +200,11 @@ class BezierCurve
     tan = @tangent t
     new Point(-tan.y, tan.x)
 
-class BezierSpline
+class Spline
   ###
-  A series of BezierCurve's that connect end-to-end, smoothly transitioning from one to the next.
+  A series of Curve's that connect end-to-end, smoothly transitioning from one to the next.
 
-  * curves: BezierCurve[]. List of curves that make up the spline
+  * curves: Curve[]. List of curves that make up the spline
   * startLengths: number[]. The length of the whole spline up to the start of each segment curve
   * endLengths: number[]. The length of the whole spline up to the end of each segment curve
   * length: number. The length of the entire spline
@@ -227,7 +244,7 @@ class BezierSpline
 
     { p1: p1, p2: p2 }
 
-  @computeBezierSpline = (xs, ys, closed) ->
+  @computeSpline = (xs, ys, closed) ->
     extend = 12
 
     if closed
@@ -238,8 +255,8 @@ class BezierSpline
       xs = [extendLeft(xs)..., xs..., extendRight(xs)...]
       ys = [extendLeft(ys)..., ys..., extendRight(ys)...]
 
-    cx = BezierSpline.computeControlPoints xs
-    cy = BezierSpline.computeControlPoints ys
+    cx = Spline.computeControlPoints xs
+    cy = Spline.computeControlPoints ys
     startLength = 0
 
     if closed
@@ -251,7 +268,7 @@ class BezierSpline
       cy.p2 = cy.p2[extend..-extend]
 
     for [p0x, p0y, p1x, p1y, p2x, p2y, p3x, p3y], i in _zip(xs[...-1], ys[...-1], cx.p1, cy.p1, cx.p2, cy.p2, xs[1..], ys[1..])
-      c = new BezierCurve(new Point(p0x, p0y), new Point(p1x, p1y), new Point(p2x, p2y), new Point(p3x, p3y))
+      c = new Curve(new Point(p0x, p0y), new Point(p1x, p1y), new Point(p2x, p2y), new Point(p3x, p3y))
       c.startLength = startLength;
       c.endLength = startLength + c.length;
       c.segmentOffset = i / (xs.length-1);
@@ -268,7 +285,7 @@ class BezierSpline
     * closed: Boolean. Default false. Indicates that the spline should connect its end point back to its start point, making a loop.
     ###
     @closed = closed;
-    @curves = BezierSpline.computeBezierSpline(knots.map((p) -> p.x), knots.map((p) -> p.y), closed);
+    @curves = Spline.computeSpline(knots.map((p) -> p.x), knots.map((p) -> p.y), closed);
     @startLengths = (c.startLength for c in @curves)
     @endLengths = (c.endLength for c in @curves)
     @length = @endLengths[-1..][0];
@@ -364,7 +381,7 @@ class BezierSpline
 
   normalize: (method, segmentLength, segmentCount) ->
     ###
-    Produces a new BezierSpline with the points normalized.
+    Produces a new Spline with the points normalized.
 
     * method: ('length', 'x'). Default 'length'. Option to indicate if the spline should be recomputed to smooth out numerical
     properties or make drawing easier.
@@ -379,7 +396,7 @@ class BezierSpline
       when 'length'
         segmentLength = @length / segmentCount
         ps = (@pointAtLength(i * segmentLength) for i in [0...segmentCount])
-        new BezierSpline(ps, @closed)
+        new Spline(ps, @closed)
 
       when 'x'
         this # TODO
@@ -394,6 +411,11 @@ class BezierSpline
 #                .range(d3.range(knots.length)),
 #  step = knots[knots.length-1].x / segmentCount;
 #
-#this.curves = BezierSpline.computeBezierSpline(d3.range(0, segmentCount+step, step)
+#this.curves = Spline.computeSpline(d3.range(0, segmentCount+step, step)
 #.map(tScale)
 #.map(this.pointAtLength));
+
+this.bezier =
+  Point: Point
+  Curve: Curve
+  Spline: Spline
