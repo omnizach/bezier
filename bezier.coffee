@@ -28,6 +28,8 @@ Function::_getter = (prop, get) ->
 #  ### Utility function for defining object property setter. ###
 #  Object.defineProperty @prototype, prop, {set, configurable: yes}
 
+ALMOST_ONE = 1 - 1e-6
+
 class Point
   ### A Point object represents a location in space or a vector. ###
 
@@ -322,21 +324,18 @@ class Spline
     @length = @endLengths[-1..][0];
 
   _curveIndex: (t) ->
-    i = Math.trunc(t)
-    t = t % 1
+    t = (if t < 0 then 0 else if t > ALMOST_ONE then ALMOST_ONE else t) * @curves.length
 
-    if i < 0 || i > @curves.length
-      null
-    else if i == @curves.length
-      { i: i-1, t: t+1 }
-    else
-      { i:i, t:t }
+    index = Math.trunc t
+
+    i: index
+    t: t-index
 
   point: (t) ->
     ###
     Computes the point at position t of the curve.
 
-    * t The portion of the curve to consider. The spline starts at t=0 and ends at t=curves.length.
+    * t The portion of the curve to consider. The spline starts at t=0 and ends at t=1.
     * Returns: Point. the location point.
     ###
     a = @_curveIndex(t)
@@ -363,7 +362,7 @@ class Spline
     ###
     Computes the first derivative at position t of the curve.
 
-    * t The point of the curve to consider. The curve starts at t=0 and ends at t=curves.length.
+    * t The point of the curve to consider. The curve starts at t=0 and ends at t=1.
     * Returns: Point. The derivative as a vector.
     ###
     a = @_curveIndex(t)
@@ -373,7 +372,7 @@ class Spline
     ###
     Computes the second derivative at position t of the curve.
 
-    * t The point of the curve to consider. The curve starts at t=0 and ends at t=curves.length.
+    * t The point of the curve to consider. The curve starts at t=0 and ends at t=1.
     * Returns: Point. The second derivative as a vector.
     ###
     a = @_curveIndex(t)
@@ -384,7 +383,7 @@ class Spline
     Computes the curvature at position t of the curve. Curvature is 1/R where R is the instantaneous
     radius of the curve.
 
-    * t The point of the curve to consider. The curve starts at t=0 and ends at t=curves.length.
+    * t The point of the curve to consider. The curve starts at t=0 and ends at t=1.
     * Returns: number. The curvature value.
     ###
     a = @_curveIndex(t)
@@ -394,7 +393,7 @@ class Spline
     ###
     Computes the tangent at position t of the curve.
 
-    * t The point of the curve to consider. The curve starts at t=0 and ends at t=curves.length.
+    * t The point of the curve to consider. The curve starts at t=0 and ends at t=1.
     * Returns: Point. The tangent as a vector.
     ###
     a = this._curveIndex(t)
@@ -404,7 +403,7 @@ class Spline
     ###
     Computes the normal at position t of the curve.
 
-    * t The point of the curve to consider. The curve starts at t=0 and ends at t=curves.length.
+    * t The point of the curve to consider. The curve starts at t=0 and ends at t=1.
     * Returns: Point. The normal as a vector.
     ###
     a = @_curveIndex(t)

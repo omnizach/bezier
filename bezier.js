@@ -15,7 +15,7 @@ A library for generating smooth Bezier curves and splines. This contains extra f
  */
 
 (function() {
-  var Curve, Point, Spline, _zip,
+  var ALMOST_ONE, Curve, Point, Spline, _zip,
     modulo = function(a, b) { return (+a % (b = +b) + b) % b; },
     slice = [].slice;
 
@@ -56,6 +56,8 @@ A library for generating smooth Bezier curves and splines. This contains extra f
       configurable: true
     });
   };
+
+  ALMOST_ONE = 1 - 1e-6;
 
   Point = (function() {
 
@@ -447,22 +449,13 @@ A library for generating smooth Bezier curves and splines. This contains extra f
     }
 
     Spline.prototype._curveIndex = function(t) {
-      var i;
-      i = Math.trunc(t);
-      t = t % 1;
-      if (i < 0 || i > this.curves.length) {
-        return null;
-      } else if (i === this.curves.length) {
-        return {
-          i: i - 1,
-          t: t + 1
-        };
-      } else {
-        return {
-          i: i,
-          t: t
-        };
-      }
+      var index;
+      t = (t < 0 ? 0 : t > ALMOST_ONE ? ALMOST_ONE : t) * this.curves.length;
+      index = Math.trunc(t);
+      return {
+        i: index,
+        t: t - index
+      };
     };
 
     Spline.prototype.point = function(t) {
@@ -470,7 +463,7 @@ A library for generating smooth Bezier curves and splines. This contains extra f
       /*
       Computes the point at position t of the curve.
       
-      * t The portion of the curve to consider. The spline starts at t=0 and ends at t=curves.length.
+      * t The portion of the curve to consider. The spline starts at t=0 and ends at t=1.
       * Returns: Point. the location point.
        */
       var a;
@@ -508,7 +501,7 @@ A library for generating smooth Bezier curves and splines. This contains extra f
       /*
       Computes the first derivative at position t of the curve.
       
-      * t The point of the curve to consider. The curve starts at t=0 and ends at t=curves.length.
+      * t The point of the curve to consider. The curve starts at t=0 and ends at t=1.
       * Returns: Point. The derivative as a vector.
        */
       var a;
@@ -521,7 +514,7 @@ A library for generating smooth Bezier curves and splines. This contains extra f
       /*
       Computes the second derivative at position t of the curve.
       
-      * t The point of the curve to consider. The curve starts at t=0 and ends at t=curves.length.
+      * t The point of the curve to consider. The curve starts at t=0 and ends at t=1.
       * Returns: Point. The second derivative as a vector.
        */
       var a;
@@ -535,7 +528,7 @@ A library for generating smooth Bezier curves and splines. This contains extra f
       Computes the curvature at position t of the curve. Curvature is 1/R where R is the instantaneous
       radius of the curve.
       
-      * t The point of the curve to consider. The curve starts at t=0 and ends at t=curves.length.
+      * t The point of the curve to consider. The curve starts at t=0 and ends at t=1.
       * Returns: number. The curvature value.
        */
       var a;
@@ -548,7 +541,7 @@ A library for generating smooth Bezier curves and splines. This contains extra f
       /*
       Computes the tangent at position t of the curve.
       
-      * t The point of the curve to consider. The curve starts at t=0 and ends at t=curves.length.
+      * t The point of the curve to consider. The curve starts at t=0 and ends at t=1.
       * Returns: Point. The tangent as a vector.
        */
       var a;
@@ -561,7 +554,7 @@ A library for generating smooth Bezier curves and splines. This contains extra f
       /*
       Computes the normal at position t of the curve.
       
-      * t The point of the curve to consider. The curve starts at t=0 and ends at t=curves.length.
+      * t The point of the curve to consider. The curve starts at t=0 and ends at t=1.
       * Returns: Point. The normal as a vector.
        */
       var a;
