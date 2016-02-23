@@ -99,15 +99,19 @@ Computes the normal at position t of the curve.
 
 
 #### normalize(method, segmentLength, segmentCount)
-Produces a new Spline with the points normalized. This is important to use if you want the derivatives to be
-smooth curve-to-curve and for all the functions that take a `t` value to approximate the length along the curve.
+Produces a new Spline with the points normalized. Recomputes the
+spline so that the points are evenly distributed and each curve
+is approximately the same length. This has the side-effect of all
+the properties (such as the derivatives) to be approximately
+accurate with respect to the length of the curve when using the
+`t` value, making many of these operations much more efficient.
 
-* `method`: ('length', 'x'). Default 'length'. Option to indicate if the spline should be recomputed to smooth out numerical
-properties or make drawing easier.
-  * length: recompute the spline so that each curve is approximately the same length.
-  * x: recompute the curve so that the x values are evenly distributed. Useful for when the knots define a function of y in terms of x coordinates.
-* `segmentLength`: number. Default 1. If normalizing, sets the step interval for how close the normalized knot points should be.
-* `segmentCount`: number. If normalizing, sets the number of knot points to use, evenly distributed based on the normalization strategy.
+* segmentLength: number. Default 1. If normalizing, sets the step
+  interval for how close the normalized knot points should be.
+* segmentCount: number. Default spline length / segmentLength.
+  If normalizing, sets the number of knot
+  points to use, evenly distributed based on the normalization
+  strategy.
 
 ### Curve
 
@@ -216,7 +220,7 @@ any object that conforms to `{ x: (number), y: (number) }` will work.
 
 ##### Example
 ```
-var p = new Point(35, 27); // { x: 35, y: 27 }
+var p = Point(35, 27); // { x: 35, y: 27 }
 ```
 
 ## Credits

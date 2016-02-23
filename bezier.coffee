@@ -1,12 +1,15 @@
 ###
 
 # Bezier
-A library for generating smooth Bezier curves and splines. This contains extra functionality missing from SVG.
+A library for generating smooth Bezier curves and splines. This
+contains extra functionality missing from SVG.
 
 ## Credits
 
-* Function to create control points of a Bezier Spline: [particleincell.com](https://www.particleincell.com)
-* Function to compute the length of a Bezier Curve: [raphael](https://github.com/DmitryBaranovskiy/raphael)
+* Function to create control points of a Bezier Spline:
+  [particleincell.com](https://www.particleincell.com)
+* Function to compute the length of a Bezier Curve:
+  [raphael](https://github.com/DmitryBaranovskiy/raphael)
 
 ## License
 [MIT](http://en.wikipedia.org/wiki/MIT_License)
@@ -14,14 +17,12 @@ A library for generating smooth Bezier curves and splines. This contains extra f
 ###
 
 _zip = () ->
-  ### Utility function for array zip. ###
   lengthArray = (arr.length for arr in arguments)
   length = Math.min(lengthArray...)
   for i in [0...length]
     arr[i] for arr in arguments
 
 Function::_getter = (prop, get) ->
-  ### Utility function for defining object property getter. ###
   Object.defineProperty @prototype, prop, {get, configurable: yes}
 
 #Function::_setter = (prop, set) ->
@@ -31,62 +32,23 @@ Function::_getter = (prop, get) ->
 ALMOST_ONE = 1 - 1e-6
 
 class Point
-  ### A Point object represents a location in space or a vector. ###
 
   constructor: (x, y) ->
-    ###
-    * x: Number. The x coordinate
-    * y: Number. The y coordinate
-
-    ```
-    var p = new Point(35, 27); // { x: 35, y: 27 }
-    ```
-    ###
     return new Point(x, y) unless this instanceof Point
+
     @x = x
     @y = y
 
 
 class Curve
-  ###
-  A Curve represents one segment of a spline.
-  ###
-
-  @_base3 = (t, p1, p2, p3, p4) ->
-    t1 = -3 * p1 + 9 * p2 - 9 * p3 + 3 * p4
-    t2 = t * t1 + 6 * p1 - 12 * p2 + 6 * p3
-    return t * t2 - 3 * p1 + 3 * p2;
 
   @penPath = (c) ->
-    ###
-    Static function that will draw the curve using the SVG path mini-language. It's useful as a map function over a Spline's curves.
-    ###
     "M #{ c.p0.x }, #{ c.p0.y }
      C #{ c.p1.x }, #{ c.p1.y }
        #{ c.p2.x }, #{ c.p2.y }
        #{ c.p3.x }, #{ c.p3.y }"
 
   @paintPath = (w) ->
-    ###
-    * w: number. The width of each segment.
-
-    Static function factory that will draw the curve as a wedge that can be filled, using the SVG path mini-language.
-    It's useful as a map function over a Spline's curves.
-
-    Example using D3:
-
-    ```
-    var path = bezier.Curve.paintPath(50); // each segment will have width 50
-
-    var spline = new bezier.Spline(points);
-
-    d3.selectAll('.curve')
-      .data(spline.curves)
-        .enter()
-        .append('path')
-        .attr('d', path);
-    ```
-    ###
     w2 = w / 2
     (c) ->
       n0 = c.normal(0)
@@ -98,13 +60,8 @@ class Curve
        L #{ c.p3.x - n3.x*w2 }, #{ c.p3.y - n3.y*w2 } Z"
 
   constructor: (p0, p1, p2, p3) ->
-    ###
-    * p0: Point. start point
-    * p1: Point. control point 1
-    * p2: Point. control point 2
-    * p3: Point. end point
-    ###
     return new Curve(p0, p1, p2, p3) unless this instanceof Curve
+
     @p0 = p0
     @p1 = p1
     @p2 = p2
@@ -114,21 +71,21 @@ class Curve
     target = Math.min(target, @length)
     guess = guess || target / @length
 
-    error = (@lengthAt(guess) - target) / @length;
+    error = (@lengthAt(guess) - target) / @length
 
     if Math.abs(error) < 0.0001
       guess
     else
-      @_findT(target, guess - error / 2);
+      @_findT(target, guess - error / 2)
 
-  # adapted from: https://github.com/DmitryBaranovskiy/raphael/blob/c47c077368c1113e1ed653376415961749de5466/dev/raphael.core.js
+  @_base3 = (t, p1, p2, p3, p4) ->
+    t1 = -3 * p1 + 9 * p2 - 9 * p3 + 3 * p4
+    t2 = t * t1 + 6 * p1 - 12 * p2 + 6 * p3
+    t * t2 - 3 * p1 + 3 * p2
+
+  # adapted from:
+  # https://github.com/DmitryBaranovskiy/raphael/blob/c47c077368c1113e1ed653376415961749de5466/dev/raphael.core.js
   lengthAt: (t = 1) ->
-    ###
-    Computes the length at position t of the curve.
-
-    * t: Number. The portion of the curve to consider. The curve starts at t=0 and ends at t=1.
-    * Returns number, the length value.
-    ###
     t = if t > 1 then 1 else if t < 0 then 0 else t
     t2 = t / 2
 
@@ -137,49 +94,34 @@ class Curve
       d[1] * Math.sqrt(Curve._base3(ct, @p0.x, @p1.x, @p2.x, @p3.x) ** 2 +
                        Curve._base3(ct, @p0.y, @p1.y, @p2.y, @p3.y) ** 2)
 
-    t2 * [[-0.1252, 0.2491],[0.1252, 0.2491],[-0.3678, 0.2335],[0.3678, 0.2335],[-0.5873, 0.2032],
-                 [0.5873, 0.2032],[-0.7699, 0.1601],[0.7699, 0.1601],[-0.9041, 0.1069],[0.9041, 0.1069],
-                 [-0.9816, 0.0472],[0.9816, 0.0472]]
-    .map integrate, this
+    t2 * [[-0.1252, 0.2491],[0.1252, 0.2491],[-0.3678, 0.2335],
+          [0.3678, 0.2335],[-0.5873, 0.2032],[0.5873, 0.2032],
+          [-0.7699, 0.1601],[0.7699, 0.1601],[-0.9041, 0.1069],
+          [0.9041, 0.1069],[-0.9816, 0.0472],[0.9816, 0.0472]
+    ].map integrate, this
     .reduce (p, c) -> p + c
 
   @_getter 'length', -> @_length ?= @lengthAt(1)
-  ###
-  The full length of the curve
-  ###
 
-  point: (t) ->
-    ###
-    Computes the point at position t of the curve.
+  x: (t = 0) ->
+    (1-t)**3 * @p0.x +
+    3 * (1-t)**2 * t * @p1.x +
+    3 * (1-t) * t**2 * @p2.x +
+    t**3 * @p3.x
 
-    * t: number. The portion of the curve to consider. The curve starts at t=0 and ends at t=1.
-    * Returns: Point, the location point.
-    ###
-    new Point((1-t)**3 * @p0.x +
-              3 * (1-t)**2 * t * @p1.x +
-              3 * (1-t) * t**2 * @p2.x +
-              t**3 * @p3.x,
-              (1-t)**3 * @p0.y +
-              3 * (1-t)**2 * t * @p1.y +
-              3 * (1-t) * t**2 * @p2.y +
-              t**3 * @p3.y)
+  y: (t = 0) ->
+    (1-t)**3 * @p0.y +
+    3 * (1-t)**2 * t * @p1.y +
+    3 * (1-t) * t**2 * @p2.y +
+    t**3 * @p3.y
 
-  pointAtLength: (z) ->
-    ###
-    Computes the point at a length of the curve.
+  point: (t = 0) ->
+    Point(@x(t), @y(t))
 
-    * z: number. The length of the curve to travel.
-    * Returns: {Point} the location point.
-    ###
+  pointAtLength: (z = 0) ->
     @point @_findT z
 
-  firstDerivative: (t) ->
-    ###
-    Computes the first derivative at position t of the curve.
-
-    * t: number. The point of the curve to consider. The curve starts at t=0 and ends at t=1.
-    * Returns: Point, The derivative as a vector.
-    ###
+  firstDerivative: (t = 0) ->
     new Point(3 * (1-t) ** 2 * (@p1.x - @p0.x) +
               6 * (1-t) * t * (@p2.x - @p1.x) +
               3 * t**2 * (@p3.x - @p2.x),
@@ -187,63 +129,37 @@ class Curve
               6 * (1-t) * t * (@p2.y - @p1.y) +
               3 * t**2 * (@p3.y - @p2.y))
 
-  secondDerivative: (t) ->
-    ###
-    Computes the second derivative at position t of the curve.
-
-    * t: number. The point of the curve to consider. The curve starts at t=0 and ends at t=1.
-    * Returns: Point. The second derivative as a vector.
-    ###
+  secondDerivative: (t = 0) ->
     new Point(6 * (1-t) * (@p2.x - 2*@p1.x + @p0.x) +
               6 * t * (@p3.x - 2*@p2.x + @p2.x),
               6 * (1-t) * (@p2.y - 2*@p1.y + @p0.y) +
               6 * t *   (@p3.y - 2*@p2.y + @p2.y))
 
 
-  curvature: (t) ->
-    ###
-    Computes the curvature at position t of the curve. Curvature is 1/R where R is the instantaneous
-    radius of the curve.
-
-    * t: number. The point of the curve to consider. The curve starts at t=0 and ends at t=1.
-    * Returns: number, The curvature value.
-    ###
+  curvature: (t = 0) ->
     d1 = @firstDerivative(t) || 0
     d2 = @secondDerivative(t) || 0
-    (d1.x*d2.y - d1.y*d2.x) / (d1.x*d1.x + d1.y*d1.y) ** 1.5
+    (d1.x*d2.y - d1.y*d2.x) / (d1.x ** 2 + d1.y ** 2) ** 1.5
 
-  tangent: (t) ->
-    ###
-    Computes the tangent at position t of the curve.
-
-    * t: number. The point of the curve to consider. The curve starts at t=0 and ends at t=1.
-    * Returns: Point. The tangent as a vector.
-    ###
+  tangent: (t = 0) ->
     d1 = @firstDerivative(t)
     d = Math.sqrt(d1.x*d1.x + d1.y*d1.y) || 1
     new Point(d1.x/d, d1.y/d)
 
-  normal: (t) ->
-    ###
-    Computes the normal at position t of the curve.
-
-    * t: number The point of the curve to consider. The curve starts at t=0 and ends at t=1.
-    * Returns: Point. The normal as a vector.
-    ###
+  normal: (t = 0) ->
     tan = @tangent t
     new Point(-tan.y, tan.x)
 
-class Spline
-  ###
-  A series of Curve's that connect end-to-end, smoothly transitioning from one to the next.
+  pointTransform: (t = 0) ->
+    [x, y] = [@x(t), @y(t)]
+    tan = @tangent(t)
+    "translate(#{ x }, #{ y }) rotate(#{ Math.atan2(tan.y, tan.x)*180/Math.PI })"
 
-  * curves: Curve[]. List of curves that make up the spline
-  * startLengths: number[]. The length of the whole spline up to the start of each segment curve
-  * endLengths: number[]. The length of the whole spline up to the end of each segment curve
-  * length: number. The length of the entire spline
-  ###
+class Spline
+
   # adapted from https://www.particleincell.com/wp-content/uploads/2012/06/bezier-spline.js
-  # computes control points given knots K, this is the brain of the operation
+  # computes control points given knots K, this is the brain of the
+  # operation
   @computeControlPoints = (k) ->
     a = (i) -> if i <= 0 then 0 else if i >= n-1 then 2 else 1
     c = (i) -> if i >= n-1 then 0 else 1
@@ -281,9 +197,11 @@ class Spline
     extend = 12
 
     if closed
-      extendRight = (ns) -> (ns[i %% ns.length] for i in [0...extend])
+      extendRight = (ns) ->
+        (ns[i %% ns.length] for i in [0...extend])
 
-      extendLeft = (ns) -> (ns[(ns.length-i) %% ns.length] for i in [extend...0])
+      extendLeft = (ns) ->
+        (ns[(ns.length-i) %% ns.length] for i in [extend...0])
 
       xs = [extendLeft(xs)..., xs..., extendRight(xs)...]
       ys = [extendLeft(ys)..., ys..., extendRight(ys)...]
@@ -300,54 +218,47 @@ class Spline
       cx.p2 = cx.p2[extend..-extend]
       cy.p2 = cy.p2[extend..-extend]
 
-    for [p0x, p0y, p1x, p1y, p2x, p2y, p3x, p3y], i in _zip(xs[...-1], ys[...-1], cx.p1, cy.p1, cx.p2, cy.p2, xs[1..], ys[1..])
-      c = new Curve(new Point(p0x, p0y), new Point(p1x, p1y), new Point(p2x, p2y), new Point(p3x, p3y))
-      c.startLength = startLength;
-      c.endLength = startLength + c.length;
-      c.segmentOffset = i / (xs.length-1);
-      c.index = i;
+    for [p0x, p0y, p1x, p1y, p2x, p2y, p3x, p3y], i in \
+    _zip(xs[...-1], ys[...-1], cx.p1, cy.p1, cx.p2, cy.p2, xs[1..], ys[1..])
+      c = new Curve(new Point(p0x, p0y),
+                    new Point(p1x, p1y),
+                    new Point(p2x, p2y),
+                    new Point(p3x, p3y))
+      c.startLength = startLength
+      c.endLength = startLength + c.length
+      c.segmentOffset = i / (xs.length-1)
+      c.index = i
 
-      startLength += c.length;
+      startLength += c.length
 
       c
 
   constructor: (knots, closed = false) ->
-    ###
-    * knots: Point[]. Array of points that the spline passes through. A curve is generated connecting each knot point to the next.
-    * closed: Boolean. Default false. Indicates that the spline should connect its end point back to its start point, making a loop.
-    ###
     return new Spline(knots, closed) unless this instanceof Spline
+
     @closed = closed
-    @curves = Spline.computeSpline(knots.map((p) -> p.x), knots.map((p) -> p.y), closed);
+    @curves = Spline.computeSpline(knots.map((p) -> p.x),
+                                   knots.map((p) -> p.y),
+                                   closed)
     @startLengths = (c.startLength for c in @curves)
     @endLengths = (c.endLength for c in @curves)
-    @length = @endLengths[-1..][0];
+    @length = @endLengths[-1..][0]
 
-  _curveIndex: (t) ->
-    t = (if t < 0 then 0 else if t > ALMOST_ONE then ALMOST_ONE else t) * @curves.length
+  @_marshalCurve: (funcName) -> (t) ->
+    t = (if t < 0 then 0 else if t > ALMOST_ONE then ALMOST_ONE else t) * @curves.length || 0
 
     index = Math.trunc t
 
-    i: index
-    t: t-index
+    @curves[index][funcName](t-index)
 
-  point: (t) ->
-    ###
-    Computes the point at position t of the curve.
+  x: @_marshalCurve 'x'
 
-    * t The portion of the curve to consider. The spline starts at t=0 and ends at t=1.
-    * Returns: Point. the location point.
-    ###
-    a = @_curveIndex(t)
-    @curves[a.i].point(a.t)
+  y: @_marshalCurve 'y'
 
-  pointAtLength: (z) ->
-    ###
-    Computes the point at length z of the curve.
+  point: @_marshalCurve 'point'
 
-    * z The length of the curve to travel.
-    * Returns: Point. the location point.
-    ###
+  pointAtLength: (z = 0) ->
+
     findCurveIndex = (lengths, z, start, stop) ->
       mid = start + stop >>> 1
       switch
@@ -355,97 +266,39 @@ class Spline
         when z < (lengths[mid-1] || 0) then findCurveIndex(lengths, z, start, mid)
         else findCurveIndex(lengths, z, mid+1, stop)
 
-    i = findCurveIndex(@endLengths, Math.min(z, @endLengths[@endLengths.length-1]), 0, @endLengths.length)
+    i = findCurveIndex(@endLengths,
+                       Math.min(z, @endLengths[@endLengths.length-1]),
+                       0, @endLengths.length)
     @curves[i].pointAtLength(z - @startLengths[i])
 
-  firstDerivative: (t) ->
-    ###
-    Computes the first derivative at position t of the curve.
+  firstDerivative: @_marshalCurve 'firstDerivative'
 
-    * t The point of the curve to consider. The curve starts at t=0 and ends at t=1.
-    * Returns: Point. The derivative as a vector.
-    ###
-    a = @_curveIndex(t)
-    @curves[a.i].firstDerivative(a.t)
+  secondDerivative: @_marshalCurve 'secondDerivative'
 
-  secondDerivative: (t) ->
-    ###
-    Computes the second derivative at position t of the curve.
+  curvature: @_marshalCurve 'curvature'
 
-    * t The point of the curve to consider. The curve starts at t=0 and ends at t=1.
-    * Returns: Point. The second derivative as a vector.
-    ###
-    a = @_curveIndex(t)
-    @curves[a.i].secondDerivative(a.t)
+  tangent: @_marshalCurve 'tangent'
 
-  curvature: (t) ->
-    ###
-    Computes the curvature at position t of the curve. Curvature is 1/R where R is the instantaneous
-    radius of the curve.
+  normal: @_marshalCurve 'normal'
 
-    * t The point of the curve to consider. The curve starts at t=0 and ends at t=1.
-    * Returns: number. The curvature value.
-    ###
-    a = @_curveIndex(t)
-    @curves[a.i].curvature(a.t)
+  pointTransform: @_marshalCurve 'pointTransform'
 
-  tangent: (t) ->
-    ###
-    Computes the tangent at position t of the curve.
+  normalize: (segmentLength = @length / segmentCount || 1,
+              segmentCount = Math.ceil(@length / segmentLength)) ->
+    ps = (@pointAtLength(i * segmentLength) for i in [0...segmentCount])
+    Spline(ps, @closed)
 
-    * t The point of the curve to consider. The curve starts at t=0 and ends at t=1.
-    * Returns: Point. The tangent as a vector.
-    ###
-    a = this._curveIndex(t)
-    return this.curves[a.i].tangent(a.t)
+interpolateX = (spline) -> spline.x.bind(spline)
 
-  normal: (t) ->
-    ###
-    Computes the normal at position t of the curve.
+interpolateY = (spline) -> spline.y.bind(spline)
 
-    * t The point of the curve to consider. The curve starts at t=0 and ends at t=1.
-    * Returns: Point. The normal as a vector.
-    ###
-    a = @_curveIndex(t)
-    @curves[a.i].normal(a.t)
-
-  normalize: (method, segmentLength, segmentCount) ->
-    ###
-    Produces a new Spline with the points normalized.
-
-    * method: ('length', 'x'). Default 'length'. Option to indicate if the spline should be recomputed to smooth out numerical
-    properties or make drawing easier.
-      * length: recompute the spline so that each curve is approximately the same length.
-      * x: recompute the curve so that the x values are evenly distributed. Useful for when the knots define a function of y in terms of x coordinates.
-    * segmentLength: number. Defatul 1. If normalizing, sets the step interval for how close the normalized knot points should be.
-    * segmentCount: number. If normalizing, sets the number of knot points to use, evenly distributed based on the normalization strategy.
-    ###
-    segmentCount = segmentCount || Math.ceil(@length / (segmentLength || 1))
-
-    switch method
-      when 'length'
-        segmentLength = @length / segmentCount
-        ps = (@pointAtLength(i * segmentLength) for i in [0...segmentCount])
-        new Spline(ps, @closed)
-
-      when 'x'
-        this # TODO
-
-      else
-        this
-
-# DEPRICATED CODE, NEEDS REWRITE
-#// assumes that knots defines a function, so sorted by x values
-#var tScale = d3.scale.linear()
-#                .domain(knots.map(function(p) { return p.x; }))
-#                .range(d3.range(knots.length)),
-#  step = knots[knots.length-1].x / segmentCount;
-#
-#this.curves = Spline.computeSpline(d3.range(0, segmentCount+step, step)
-#.map(tScale)
-#.map(this.pointAtLength));
+interpolateTransform = (spline) -> spline.pointTransform.bind(spline)
 
 this.bezier =
   Point: Point
   Curve: Curve
   Spline: Spline
+  interpolateX: interpolateX
+  interpolateY: interpolateY
+  interpolateTransform: interpolateTransform
+

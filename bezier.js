@@ -3,25 +3,26 @@
 /*
 
  * Bezier
-A library for generating smooth Bezier curves and splines. This contains extra functionality missing from SVG.
+A library for generating smooth Bezier curves and splines. This
+contains extra functionality missing from SVG.
 
 ## Credits
 
-* Function to create control points of a Bezier Spline: [particleincell.com](https://www.particleincell.com)
-* Function to compute the length of a Bezier Curve: [raphael](https://github.com/DmitryBaranovskiy/raphael)
+* Function to create control points of a Bezier Spline:
+  [particleincell.com](https://www.particleincell.com)
+* Function to compute the length of a Bezier Curve:
+  [raphael](https://github.com/DmitryBaranovskiy/raphael)
 
 ## License
 [MIT](http://en.wikipedia.org/wiki/MIT_License)
  */
 
 (function() {
-  var ALMOST_ONE, Curve, Point, Spline, _zip,
+  var ALMOST_ONE, Curve, Point, Spline, _zip, interpolateTransform, interpolateX, interpolateY,
     modulo = function(a, b) { return (+a % (b = +b) + b) % b; },
     slice = [].slice;
 
   _zip = function() {
-
-    /* Utility function for array zip. */
     var arr, i, j, length, lengthArray, ref, results;
     lengthArray = (function() {
       var j, len, results;
@@ -49,8 +50,6 @@ A library for generating smooth Bezier curves and splines. This contains extra f
   };
 
   Function.prototype._getter = function(prop, get) {
-
-    /* Utility function for defining object property getter. */
     return Object.defineProperty(this.prototype, prop, {
       get: get,
       configurable: true
@@ -60,18 +59,7 @@ A library for generating smooth Bezier curves and splines. This contains extra f
   ALMOST_ONE = 1 - 1e-6;
 
   Point = (function() {
-
-    /* A Point object represents a location in space or a vector. */
     function Point(x, y) {
-
-      /*
-      * x: Number. The x coordinate
-      * y: Number. The y coordinate
-      
-      ```
-      var p = new Point(35, 27); // { x: 35, y: 27 }
-      ```
-       */
       if (!(this instanceof Point)) {
         return new Point(x, y);
       }
@@ -84,47 +72,11 @@ A library for generating smooth Bezier curves and splines. This contains extra f
   })();
 
   Curve = (function() {
-
-    /*
-    A Curve represents one segment of a spline.
-     */
-    Curve._base3 = function(t, p1, p2, p3, p4) {
-      var t1, t2;
-      t1 = -3 * p1 + 9 * p2 - 9 * p3 + 3 * p4;
-      t2 = t * t1 + 6 * p1 - 12 * p2 + 6 * p3;
-      return t * t2 - 3 * p1 + 3 * p2;
-    };
-
     Curve.penPath = function(c) {
-
-      /*
-      Static function that will draw the curve using the SVG path mini-language. It's useful as a map function over a Spline's curves.
-       */
       return "M " + c.p0.x + ", " + c.p0.y + " C " + c.p1.x + ", " + c.p1.y + " " + c.p2.x + ", " + c.p2.y + " " + c.p3.x + ", " + c.p3.y;
     };
 
     Curve.paintPath = function(w) {
-
-      /*
-      * w: number. The width of each segment.
-      
-      Static function factory that will draw the curve as a wedge that can be filled, using the SVG path mini-language.
-      It's useful as a map function over a Spline's curves.
-      
-      Example using D3:
-      
-      ```
-      var path = bezier.Curve.paintPath(50); // each segment will have width 50
-      
-      var spline = new bezier.Spline(points);
-      
-      d3.selectAll('.curve')
-        .data(spline.curves)
-          .enter()
-          .append('path')
-          .attr('d', path);
-      ```
-       */
       var w2;
       w2 = w / 2;
       return function(c) {
@@ -136,13 +88,6 @@ A library for generating smooth Bezier curves and splines. This contains extra f
     };
 
     function Curve(p0, p1, p2, p3) {
-
-      /*
-      * p0: Point. start point
-      * p1: Point. control point 1
-      * p2: Point. control point 2
-      * p3: Point. end point
-       */
       if (!(this instanceof Curve)) {
         return new Curve(p0, p1, p2, p3);
       }
@@ -164,18 +109,18 @@ A library for generating smooth Bezier curves and splines. This contains extra f
       }
     };
 
+    Curve._base3 = function(t, p1, p2, p3, p4) {
+      var t1, t2;
+      t1 = -3 * p1 + 9 * p2 - 9 * p3 + 3 * p4;
+      t2 = t * t1 + 6 * p1 - 12 * p2 + 6 * p3;
+      return t * t2 - 3 * p1 + 3 * p2;
+    };
+
     Curve.prototype.lengthAt = function(t) {
       var integrate, t2;
       if (t == null) {
         t = 1;
       }
-
-      /*
-      Computes the length at position t of the curve.
-      
-      * t: Number. The portion of the curve to consider. The curve starts at t=0 and ends at t=1.
-      * Returns number, the length value.
-       */
       t = t > 1 ? 1 : t < 0 ? 0 : t;
       t2 = t / 2;
       integrate = function(d) {
@@ -192,95 +137,85 @@ A library for generating smooth Bezier curves and splines. This contains extra f
       return this._length != null ? this._length : this._length = this.lengthAt(1);
     });
 
+    Curve.prototype.x = function(t) {
+      if (t == null) {
+        t = 0;
+      }
+      return Math.pow(1 - t, 3) * this.p0.x + 3 * Math.pow(1 - t, 2) * t * this.p1.x + 3 * (1 - t) * Math.pow(t, 2) * this.p2.x + Math.pow(t, 3) * this.p3.x;
+    };
 
-    /*
-    The full length of the curve
-     */
+    Curve.prototype.y = function(t) {
+      if (t == null) {
+        t = 0;
+      }
+      return Math.pow(1 - t, 3) * this.p0.y + 3 * Math.pow(1 - t, 2) * t * this.p1.y + 3 * (1 - t) * Math.pow(t, 2) * this.p2.y + Math.pow(t, 3) * this.p3.y;
+    };
 
     Curve.prototype.point = function(t) {
-
-      /*
-      Computes the point at position t of the curve.
-      
-      * t: number. The portion of the curve to consider. The curve starts at t=0 and ends at t=1.
-      * Returns: Point, the location point.
-       */
-      return new Point(Math.pow(1 - t, 3) * this.p0.x + 3 * Math.pow(1 - t, 2) * t * this.p1.x + 3 * (1 - t) * Math.pow(t, 2) * this.p2.x + Math.pow(t, 3) * this.p3.x, Math.pow(1 - t, 3) * this.p0.y + 3 * Math.pow(1 - t, 2) * t * this.p1.y + 3 * (1 - t) * Math.pow(t, 2) * this.p2.y + Math.pow(t, 3) * this.p3.y);
+      if (t == null) {
+        t = 0;
+      }
+      return Point(this.x(t), this.y(t));
     };
 
     Curve.prototype.pointAtLength = function(z) {
-
-      /*
-      Computes the point at a length of the curve.
-      
-      * z: number. The length of the curve to travel.
-      * Returns: {Point} the location point.
-       */
+      if (z == null) {
+        z = 0;
+      }
       return this.point(this._findT(z));
     };
 
     Curve.prototype.firstDerivative = function(t) {
-
-      /*
-      Computes the first derivative at position t of the curve.
-      
-      * t: number. The point of the curve to consider. The curve starts at t=0 and ends at t=1.
-      * Returns: Point, The derivative as a vector.
-       */
+      if (t == null) {
+        t = 0;
+      }
       return new Point(3 * Math.pow(1 - t, 2) * (this.p1.x - this.p0.x) + 6 * (1 - t) * t * (this.p2.x - this.p1.x) + 3 * Math.pow(t, 2) * (this.p3.x - this.p2.x), 3 * Math.pow(1 - t, 2) * (this.p1.y - this.p0.y) + 6 * (1 - t) * t * (this.p2.y - this.p1.y) + 3 * Math.pow(t, 2) * (this.p3.y - this.p2.y));
     };
 
     Curve.prototype.secondDerivative = function(t) {
-
-      /*
-      Computes the second derivative at position t of the curve.
-      
-      * t: number. The point of the curve to consider. The curve starts at t=0 and ends at t=1.
-      * Returns: Point. The second derivative as a vector.
-       */
+      if (t == null) {
+        t = 0;
+      }
       return new Point(6 * (1 - t) * (this.p2.x - 2 * this.p1.x + this.p0.x) + 6 * t * (this.p3.x - 2 * this.p2.x + this.p2.x), 6 * (1 - t) * (this.p2.y - 2 * this.p1.y + this.p0.y) + 6 * t * (this.p3.y - 2 * this.p2.y + this.p2.y));
     };
 
     Curve.prototype.curvature = function(t) {
-
-      /*
-      Computes the curvature at position t of the curve. Curvature is 1/R where R is the instantaneous
-      radius of the curve.
-      
-      * t: number. The point of the curve to consider. The curve starts at t=0 and ends at t=1.
-      * Returns: number, The curvature value.
-       */
       var d1, d2;
+      if (t == null) {
+        t = 0;
+      }
       d1 = this.firstDerivative(t) || 0;
       d2 = this.secondDerivative(t) || 0;
-      return (d1.x * d2.y - d1.y * d2.x) / Math.pow(d1.x * d1.x + d1.y * d1.y, 1.5);
+      return (d1.x * d2.y - d1.y * d2.x) / Math.pow(Math.pow(d1.x, 2) + Math.pow(d1.y, 2), 1.5);
     };
 
     Curve.prototype.tangent = function(t) {
-
-      /*
-      Computes the tangent at position t of the curve.
-      
-      * t: number. The point of the curve to consider. The curve starts at t=0 and ends at t=1.
-      * Returns: Point. The tangent as a vector.
-       */
       var d, d1;
+      if (t == null) {
+        t = 0;
+      }
       d1 = this.firstDerivative(t);
       d = Math.sqrt(d1.x * d1.x + d1.y * d1.y) || 1;
       return new Point(d1.x / d, d1.y / d);
     };
 
     Curve.prototype.normal = function(t) {
-
-      /*
-      Computes the normal at position t of the curve.
-      
-      * t: number The point of the curve to consider. The curve starts at t=0 and ends at t=1.
-      * Returns: Point. The normal as a vector.
-       */
       var tan;
+      if (t == null) {
+        t = 0;
+      }
       tan = this.tangent(t);
       return new Point(-tan.y, tan.x);
+    };
+
+    Curve.prototype.pointTransform = function(t) {
+      var ref, tan, x, y;
+      if (t == null) {
+        t = 0;
+      }
+      ref = [this.x(t), this.y(t)], x = ref[0], y = ref[1];
+      tan = this.tangent(t);
+      return "translate(" + x + ", " + y + ") rotate(" + (Math.atan2(tan.y, tan.x) * 180 / Math.PI) + ")";
     };
 
     return Curve;
@@ -288,15 +223,6 @@ A library for generating smooth Bezier curves and splines. This contains extra f
   })();
 
   Spline = (function() {
-
-    /*
-    A series of Curve's that connect end-to-end, smoothly transitioning from one to the next.
-    
-    * curves: Curve[]. List of curves that make up the spline
-    * startLengths: number[]. The length of the whole spline up to the start of each segment curve
-    * endLengths: number[]. The length of the whole spline up to the end of each segment curve
-    * length: number. The length of the entire spline
-     */
     Spline.computeControlPoints = function(k) {
       var a, b, c, i, j, l, m, n, o, p1, p2, r, ref, ref1, ref2;
       a = function(i) {
@@ -411,11 +337,6 @@ A library for generating smooth Bezier curves and splines. This contains extra f
       if (closed == null) {
         closed = false;
       }
-
-      /*
-      * knots: Point[]. Array of points that the spline passes through. A curve is generated connecting each knot point to the next.
-      * closed: Boolean. Default false. Indicates that the spline should connect its end point back to its start point, making a loop.
-       */
       if (!(this instanceof Spline)) {
         return new Spline(knots, closed);
       }
@@ -448,38 +369,26 @@ A library for generating smooth Bezier curves and splines. This contains extra f
       this.length = this.endLengths.slice(-1)[0];
     }
 
-    Spline.prototype._curveIndex = function(t) {
-      var index;
-      t = (t < 0 ? 0 : t > ALMOST_ONE ? ALMOST_ONE : t) * this.curves.length;
-      index = Math.trunc(t);
-      return {
-        i: index,
-        t: t - index
+    Spline._marshalCurve = function(funcName) {
+      return function(t) {
+        var index;
+        t = (t < 0 ? 0 : t > ALMOST_ONE ? ALMOST_ONE : t) * this.curves.length || 0;
+        index = Math.trunc(t);
+        return this.curves[index][funcName](t - index);
       };
     };
 
-    Spline.prototype.point = function(t) {
+    Spline.prototype.x = Spline._marshalCurve('x');
 
-      /*
-      Computes the point at position t of the curve.
-      
-      * t The portion of the curve to consider. The spline starts at t=0 and ends at t=1.
-      * Returns: Point. the location point.
-       */
-      var a;
-      a = this._curveIndex(t);
-      return this.curves[a.i].point(a.t);
-    };
+    Spline.prototype.y = Spline._marshalCurve('y');
+
+    Spline.prototype.point = Spline._marshalCurve('point');
 
     Spline.prototype.pointAtLength = function(z) {
-
-      /*
-      Computes the point at length z of the curve.
-      
-      * z The length of the curve to travel.
-      * Returns: Point. the location point.
-       */
       var findCurveIndex, i;
+      if (z == null) {
+        z = 0;
+      }
       findCurveIndex = function(lengths, z, start, stop) {
         var mid;
         mid = start + stop >>> 1;
@@ -496,113 +405,60 @@ A library for generating smooth Bezier curves and splines. This contains extra f
       return this.curves[i].pointAtLength(z - this.startLengths[i]);
     };
 
-    Spline.prototype.firstDerivative = function(t) {
+    Spline.prototype.firstDerivative = Spline._marshalCurve('firstDerivative');
 
-      /*
-      Computes the first derivative at position t of the curve.
-      
-      * t The point of the curve to consider. The curve starts at t=0 and ends at t=1.
-      * Returns: Point. The derivative as a vector.
-       */
-      var a;
-      a = this._curveIndex(t);
-      return this.curves[a.i].firstDerivative(a.t);
-    };
+    Spline.prototype.secondDerivative = Spline._marshalCurve('secondDerivative');
 
-    Spline.prototype.secondDerivative = function(t) {
+    Spline.prototype.curvature = Spline._marshalCurve('curvature');
 
-      /*
-      Computes the second derivative at position t of the curve.
-      
-      * t The point of the curve to consider. The curve starts at t=0 and ends at t=1.
-      * Returns: Point. The second derivative as a vector.
-       */
-      var a;
-      a = this._curveIndex(t);
-      return this.curves[a.i].secondDerivative(a.t);
-    };
+    Spline.prototype.tangent = Spline._marshalCurve('tangent');
 
-    Spline.prototype.curvature = function(t) {
+    Spline.prototype.normal = Spline._marshalCurve('normal');
 
-      /*
-      Computes the curvature at position t of the curve. Curvature is 1/R where R is the instantaneous
-      radius of the curve.
-      
-      * t The point of the curve to consider. The curve starts at t=0 and ends at t=1.
-      * Returns: number. The curvature value.
-       */
-      var a;
-      a = this._curveIndex(t);
-      return this.curves[a.i].curvature(a.t);
-    };
+    Spline.prototype.pointTransform = Spline._marshalCurve('pointTransform');
 
-    Spline.prototype.tangent = function(t) {
-
-      /*
-      Computes the tangent at position t of the curve.
-      
-      * t The point of the curve to consider. The curve starts at t=0 and ends at t=1.
-      * Returns: Point. The tangent as a vector.
-       */
-      var a;
-      a = this._curveIndex(t);
-      return this.curves[a.i].tangent(a.t);
-    };
-
-    Spline.prototype.normal = function(t) {
-
-      /*
-      Computes the normal at position t of the curve.
-      
-      * t The point of the curve to consider. The curve starts at t=0 and ends at t=1.
-      * Returns: Point. The normal as a vector.
-       */
-      var a;
-      a = this._curveIndex(t);
-      return this.curves[a.i].normal(a.t);
-    };
-
-    Spline.prototype.normalize = function(method, segmentLength, segmentCount) {
-
-      /*
-      Produces a new Spline with the points normalized.
-      
-      * method: ('length', 'x'). Default 'length'. Option to indicate if the spline should be recomputed to smooth out numerical
-      properties or make drawing easier.
-        * length: recompute the spline so that each curve is approximately the same length.
-        * x: recompute the curve so that the x values are evenly distributed. Useful for when the knots define a function of y in terms of x coordinates.
-      * segmentLength: number. Defatul 1. If normalizing, sets the step interval for how close the normalized knot points should be.
-      * segmentCount: number. If normalizing, sets the number of knot points to use, evenly distributed based on the normalization strategy.
-       */
+    Spline.prototype.normalize = function(segmentLength, segmentCount) {
       var i, ps;
-      segmentCount = segmentCount || Math.ceil(this.length / (segmentLength || 1));
-      switch (method) {
-        case 'length':
-          segmentLength = this.length / segmentCount;
-          ps = (function() {
-            var j, ref, results;
-            results = [];
-            for (i = j = 0, ref = segmentCount; 0 <= ref ? j < ref : j > ref; i = 0 <= ref ? ++j : --j) {
-              results.push(this.pointAtLength(i * segmentLength));
-            }
-            return results;
-          }).call(this);
-          return new Spline(ps, this.closed);
-        case 'x':
-          return this;
-        default:
-          return this;
+      if (segmentLength == null) {
+        segmentLength = this.length / segmentCount || 1;
       }
+      if (segmentCount == null) {
+        segmentCount = Math.ceil(this.length / segmentLength);
+      }
+      ps = (function() {
+        var j, ref, results;
+        results = [];
+        for (i = j = 0, ref = segmentCount; 0 <= ref ? j < ref : j > ref; i = 0 <= ref ? ++j : --j) {
+          results.push(this.pointAtLength(i * segmentLength));
+        }
+        return results;
+      }).call(this);
+      return Spline(ps, this.closed);
     };
 
     return Spline;
 
   })();
 
+  interpolateX = function(spline) {
+    return spline.x.bind(spline);
+  };
+
+  interpolateY = function(spline) {
+    return spline.y.bind(spline);
+  };
+
+  interpolateTransform = function(spline) {
+    return spline.pointTransform.bind(spline);
+  };
+
   this.bezier = {
     Point: Point,
     Curve: Curve,
-    Spline: Spline
+    Spline: Spline,
+    interpolateX: interpolateX,
+    interpolateY: interpolateY,
+    interpolateTransform: interpolateTransform
   };
 
 }).call(this);
