@@ -117,20 +117,38 @@ contains extra functionality missing from SVG.
     };
 
     Curve.prototype.lengthAt = function(t) {
-      var integrate, t2;
+      var d, integrate, t2;
       if (t == null) {
         t = 1;
       }
       t = t > 1 ? 1 : t < 0 ? 0 : t;
       t2 = t / 2;
-      integrate = function(d) {
+      integrate = function(d, c) {
         var ct;
         ct = t2 * d[0] + t2;
-        return d[1] * Math.sqrt(Math.pow(Curve._base3(ct, this.p0.x, this.p1.x, this.p2.x, this.p3.x), 2) + Math.pow(Curve._base3(ct, this.p0.y, this.p1.y, this.p2.y, this.p3.y), 2));
+        return d[1] * Math.sqrt(Math.pow(Curve._base3(ct, c.p0.x, c.p1.x, c.p2.x, c.p3.x), 2) + Math.pow(Curve._base3(ct, c.p0.y, c.p1.y, c.p2.y, c.p3.y), 2));
       };
-      return t2 * [[-0.1252, 0.2491], [0.1252, 0.2491], [-0.3678, 0.2335], [0.3678, 0.2335], [-0.5873, 0.2032], [0.5873, 0.2032], [-0.7699, 0.1601], [0.7699, 0.1601], [-0.9041, 0.1069], [0.9041, 0.1069], [-0.9816, 0.0472], [0.9816, 0.0472]].map(integrate, this).reduce(function(p, c) {
+
+      /*
+      t2 * [[-0.1252, 0.2491],[0.1252, 0.2491],[-0.3678, 0.2335],
+            [0.3678, 0.2335],[-0.5873, 0.2032],[0.5873, 0.2032],
+            [-0.7699, 0.1601],[0.7699, 0.1601],[-0.9041, 0.1069],
+            [0.9041, 0.1069],[-0.9816, 0.0472],[0.9816, 0.0472]
+      ].map integrate, this
+      .reduce (p, c) -> p + c
+       */
+      return t2 * (((function() {
+        var j, len, ref, results;
+        ref = [[-0.1252, 0.2491], [0.1252, 0.2491], [-0.3678, 0.2335], [0.3678, 0.2335], [-0.5873, 0.2032], [0.5873, 0.2032], [-0.7699, 0.1601], [0.7699, 0.1601], [-0.9041, 0.1069], [0.9041, 0.1069], [-0.9816, 0.0472], [0.9816, 0.0472]];
+        results = [];
+        for (j = 0, len = ref.length; j < len; j++) {
+          d = ref[j];
+          results.push(integrate(d, this));
+        }
+        return results;
+      }).call(this)).reduce(function(p, c) {
         return p + c;
-      });
+      }));
     };
 
     Curve._getter('length', function() {
@@ -184,8 +202,8 @@ contains extra functionality missing from SVG.
       if (t == null) {
         t = 0;
       }
-      d1 = this.firstDerivative(t) || 0;
-      d2 = this.secondDerivative(t) || 0;
+      d1 = this.firstDerivative(t);
+      d2 = this.secondDerivative(t);
       return (d1.x * d2.y - d1.y * d2.x) / Math.pow(Math.pow(d1.x, 2) + Math.pow(d1.y, 2), 1.5);
     };
 

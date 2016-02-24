@@ -26,7 +26,6 @@ Function::_getter = (prop, get) ->
   Object.defineProperty @prototype, prop, {get, configurable: yes}
 
 #Function::_setter = (prop, set) ->
-#  ### Utility function for defining object property setter. ###
 #  Object.defineProperty @prototype, prop, {set, configurable: yes}
 
 ALMOST_ONE = 1 - 1e-6
@@ -89,17 +88,16 @@ class Curve
     t = if t > 1 then 1 else if t < 0 then 0 else t
     t2 = t / 2
 
-    integrate = (d) ->
+    integrate = (d, c) ->
       ct = t2 * d[0] + t2
-      d[1] * Math.sqrt(Curve._base3(ct, @p0.x, @p1.x, @p2.x, @p3.x) ** 2 +
-                       Curve._base3(ct, @p0.y, @p1.y, @p2.y, @p3.y) ** 2)
+      d[1] * Math.sqrt(Curve._base3(ct, c.p0.x, c.p1.x, c.p2.x, c.p3.x) ** 2 +
+                       Curve._base3(ct, c.p0.y, c.p1.y, c.p2.y, c.p3.y) ** 2)
 
-    t2 * [[-0.1252, 0.2491],[0.1252, 0.2491],[-0.3678, 0.2335],
-          [0.3678, 0.2335],[-0.5873, 0.2032],[0.5873, 0.2032],
-          [-0.7699, 0.1601],[0.7699, 0.1601],[-0.9041, 0.1069],
-          [0.9041, 0.1069],[-0.9816, 0.0472],[0.9816, 0.0472]
-    ].map integrate, this
-    .reduce (p, c) -> p + c
+    t2 * ((integrate(d, @) for d in [[-0.1252, 0.2491],[0.1252, 0.2491],[-0.3678, 0.2335],
+                                      [0.3678, 0.2335],[-0.5873, 0.2032],[0.5873, 0.2032],
+                                      [-0.7699, 0.1601],[0.7699, 0.1601],[-0.9041, 0.1069],
+                                      [0.9041, 0.1069],[-0.9816, 0.0472],[0.9816, 0.0472]])
+      .reduce (p, c) -> p + c)
 
   @_getter 'length', -> @_length ?= @lengthAt(1)
 
@@ -137,8 +135,8 @@ class Curve
 
 
   curvature: (t = 0) ->
-    d1 = @firstDerivative(t) || 0
-    d2 = @secondDerivative(t) || 0
+    d1 = @firstDerivative(t)
+    d2 = @secondDerivative(t)
     (d1.x*d2.y - d1.y*d2.x) / (d1.x ** 2 + d1.y ** 2) ** 1.5
 
   tangent: (t = 0) ->
