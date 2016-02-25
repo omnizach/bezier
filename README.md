@@ -98,7 +98,7 @@ Computes the normal at position t of the curve.
 * Returns: Point. The normal as a vector.
 
 
-#### normalize(method, segmentLength, segmentCount)
+#### normalize(segmentLength, segmentCount)
 Produces a new Spline with the points normalized. Recomputes the
 spline so that the points are evenly distributed and each curve
 is approximately the same length. This has the side-effect of all
