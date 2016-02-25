@@ -155,6 +155,14 @@ class Curve
 
 class Spline
 
+  @penPath: (spline) ->
+    (Curve.penPath(c) for c in spline.curves).join(' ')
+
+  @paintPath: (w) ->
+    paintCurve = Curve.paintPath w
+    (spline) ->
+      (paintPath(c) for c in spline.curves).join(' ')
+
   # adapted from https://www.particleincell.com/wp-content/uploads/2012/06/bezier-spline.js
   # computes control points given knots K, this is the brain of the
   # operation

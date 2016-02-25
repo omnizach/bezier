@@ -128,15 +128,6 @@ contains extra functionality missing from SVG.
         ct = t2 * d[0] + t2;
         return d[1] * Math.sqrt(Math.pow(Curve._base3(ct, c.p0.x, c.p1.x, c.p2.x, c.p3.x), 2) + Math.pow(Curve._base3(ct, c.p0.y, c.p1.y, c.p2.y, c.p3.y), 2));
       };
-
-      /*
-      t2 * [[-0.1252, 0.2491],[0.1252, 0.2491],[-0.3678, 0.2335],
-            [0.3678, 0.2335],[-0.5873, 0.2032],[0.5873, 0.2032],
-            [-0.7699, 0.1601],[0.7699, 0.1601],[-0.9041, 0.1069],
-            [0.9041, 0.1069],[-0.9816, 0.0472],[0.9816, 0.0472]
-      ].map integrate, this
-      .reduce (p, c) -> p + c
-       */
       return t2 * (((function() {
         var j, len, ref, results;
         ref = [[-0.1252, 0.2491], [0.1252, 0.2491], [-0.3678, 0.2335], [0.3678, 0.2335], [-0.5873, 0.2032], [0.5873, 0.2032], [-0.7699, 0.1601], [0.7699, 0.1601], [-0.9041, 0.1069], [0.9041, 0.1069], [-0.9816, 0.0472], [0.9816, 0.0472]];
@@ -241,6 +232,38 @@ contains extra functionality missing from SVG.
   })();
 
   Spline = (function() {
+    Spline.penPath = function(spline) {
+      var c;
+      return ((function() {
+        var j, len, ref, results;
+        ref = spline.curves;
+        results = [];
+        for (j = 0, len = ref.length; j < len; j++) {
+          c = ref[j];
+          results.push(Curve.penPath(c));
+        }
+        return results;
+      })()).join(' ');
+    };
+
+    Spline.paintPath = function(w) {
+      var paintCurve;
+      paintCurve = Curve.paintPath(w);
+      return function(spline) {
+        var c;
+        return ((function() {
+          var j, len, ref, results;
+          ref = spline.curves;
+          results = [];
+          for (j = 0, len = ref.length; j < len; j++) {
+            c = ref[j];
+            results.push(paintPath(c));
+          }
+          return results;
+        })()).join(' ');
+      };
+    };
+
     Spline.computeControlPoints = function(k) {
       var a, b, c, i, j, l, m, n, o, p1, p2, r, ref, ref1, ref2;
       a = function(i) {
