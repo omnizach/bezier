@@ -1,5 +1,4 @@
-import { IPoint } from './point'
-import { Curve } from './curve'
+import { Curve, Point } from './curve'
 
 export class Spline {
   private static ALMOST_ONE = 1 - 1e-6
@@ -39,8 +38,8 @@ export class Spline {
     p2[n - 1] = 0.5 * (k[n] + p1[n - 1])
 
     return {
-      p1: p1,
-      p2: p2,
+      p1,
+      p2,
     }
   }
 
@@ -80,8 +79,6 @@ export class Spline {
       cy = Spline.computeControlPoints(ys),
       result = []
 
-    let startLength = 0
-
     if (closed) {
       xs = Spline.sliceClosedSpline(xs)
       ys = Spline.sliceClosedSpline(ys)
@@ -91,13 +88,13 @@ export class Spline {
       cy.p2 = Spline.sliceClosedSpline(cy.p2)
     }
 
-    for (let i = 0; i < xs.length - 1; i++) {
-      const c = new Curve(
-        { x: xs[i], y: ys[i] },
-        { x: cx.p1[i], y: cy.p1[i] },
-        { x: cx.p2[i], y: cy.p2[i] },
-        { x: xs[i + 1], y: ys[i + 1] },
-      )
+    for (let i = 0, startLength = 0; i < xs.length - 1; i++) {
+      const c = new Curve([
+        [xs[i], ys[i]],
+        [cx.p1[i], cy.p1[i]],
+        [cx.p2[i], cy.p2[i]],
+        [xs[i + 1], ys[i + 1]],
+      ])
 
       c.startLength = startLength
       c.endLength = startLength + c.length
@@ -117,8 +114,8 @@ export class Spline {
       t =
         (t < 0 ? 0 : t > Spline.ALMOST_ONE ? Spline.ALMOST_ONE : t) *
           this.curves.length || 0
-      const index = Math.trunc(t)
-      return func.call(this.curves[index], t - index)
+
+      return func.call(this.curves[t | 0], t % 1)
     }
   }
 
@@ -128,26 +125,22 @@ export class Spline {
     start: number,
     stop: number,
   ): number {
-    const mid = (start + stop) >> 1
+    const mid = (start + stop) >>> 1
 
-    if ((lengths[mid - 1] || 0) <= z && z <= lengths[mid]) {
-      return mid
-    }
-
-    if (z < (lengths[mid - 1] || 0)) {
-      return Spline.findCurveIndex(lengths, z, start, mid)
-    }
-
-    return Spline.findCurveIndex(lengths, z, mid + 1, stop)
+    return (lengths[mid - 1] || 0) <= z && z <= lengths[mid]
+      ? mid
+      : z < (lengths[mid - 1] || 0)
+        ? Spline.findCurveIndex(lengths, z, start, mid)
+        : Spline.findCurveIndex(lengths, z, mid + 1, stop)
   }
 
   constructor(
-    public knots: IPoint[],
-    public closed: boolean = false,
+    public readonly knots: Point[],
+    public readonly closed: boolean = false,
   ) {
     this.curves = Spline.computeSpline(
-      knots.map(p => p.x),
-      knots.map(p => p.y),
+      knots.map(([x]) => x),
+      knots.map(([, y]) => y),
       closed,
     )
 
@@ -158,17 +151,17 @@ export class Spline {
   /**
    * The value of t that goes to the end of the Spline.
    */
-  endT: number
+  readonly endT: number
 
   /**
    * List of [[Curve]]s that make up the Spline.
    */
-  curves: Curve[]
+  readonly curves: Curve[]
 
   /**
    * Total length of the Spline.
    */
-  length: number
+  readonly length: number
 
   /**
    * Get the x coordinate given t in the range [0, endT].
@@ -181,23 +174,23 @@ export class Spline {
   y: (t: number) => number = this.marshalCurve(Curve.prototype.y)
 
   /**
-   * Get the [[IPoint]] given t in the range [0, endT].
+   * Get the [[Point]] given t in the range [0, endT].
    */
-  point: (t: number) => IPoint = this.marshalCurve(Curve.prototype.point)
+  point: (t: number) => Point = this.marshalCurve(Curve.prototype.point)
 
   /**
    * Get the component-wise first derivative at the given t in the range [0, endT].
-   * Returns as an [[IPoint]] representing the derivatives with respect to x and y.
+   * Returns as an [[Point]] representing the derivatives with respect to x and y.
    */
-  firstDerivative: (t: number) => IPoint = this.marshalCurve(
+  firstDerivative: (t: number) => Point = this.marshalCurve(
     Curve.prototype.firstDerivative,
   )
 
   /**
    * Get the component-wise second derivative at the given t in the range [0, endT].
-   * Returns as an [[IPoint]] representing the 2nd derivatives with respect to x and y.
+   * Returns as an [[Point]] representing the 2nd derivatives with respect to x and y.
    */
-  secondDerivative: (t: number) => IPoint = this.marshalCurve(
+  secondDerivative: (t: number) => Point = this.marshalCurve(
     Curve.prototype.secondDerivative,
   )
 
@@ -213,16 +206,16 @@ export class Spline {
   /**
    * Get the tangent at the given t in the range [0, endT]. The direction will be in the
    * increasing-t direction.
-   * Returns as an [[IPoint]] representing the unit vector direction of the tangent.
+   * Returns as an [[Point]] representing the unit vector direction of the tangent.
    */
-  tangent: (t: number) => IPoint = this.marshalCurve(Curve.prototype.tangent)
+  tangent: (t: number) => Point = this.marshalCurve(Curve.prototype.tangent)
 
   /**
    * Get the normal at the given t in the range [0, endT]. The direction points to the left
    * with respect to the tangent direction.
-   * Returns as an [[IPoint]] respresenting the unit vector direction of the normal.
+   * Returns as an [[Point]] respresenting the unit vector direction of the normal.
    */
-  normal: (t: number) => IPoint = this.marshalCurve(Curve.prototype.normal)
+  normal: (t: number) => Point = this.marshalCurve(Curve.prototype.normal)
 
   /**
    * Get the transform string at the given t in the range [0, endT]. This will result in an SVG/CSS
@@ -237,10 +230,10 @@ export class Spline {
    * Get the point along the Spline at length z. Note that this operation is much more expensive
    * than the others that take the 't' parameter. If using this frequently, consider [[normalize]]ing
    * the Spline and using the [[point]] function.
-   * Returns the [[IPoint]] representing the coordinates of the Spline at the given length.
+   * Returns the [[Point]] representing the coordinates of the Spline at the given length.
    * @param z The length along the Spline to find.
    */
-  pointAtLength(z: number = 0): IPoint {
+  pointAtLength(z: number = 0): Point {
     const i = Spline.findCurveIndex(
       this.curves.map(c => c.endLength),
       z,
@@ -264,7 +257,7 @@ export class Spline {
    * parameter is ignored.
    *
    * @example
-   * let s1 = new Spline([{ x:0, y:0 }, { x:1, y:0 }, { x:30, y:0 }]); // non-uniform linear spline.
+   * let s1 = new Spline([[0, 0], [1, 0], [30, 0]]) // non-uniform linear spline.
    * console.log(s1.x(0), s1.x(1), s1.x(2)); // 0, 1, 30
    *
    * let s2 = s1.normalize(3); // s2's t-values increase by 1 for every 3 units along its length.
@@ -295,3 +288,12 @@ export class Spline {
     return this.curves.map(c => c.fill(width)).join(' ')
   }
 }
+
+/**
+ * Convenience function for [[Spline]] constructor.
+ * @param knots List of [[Point]]s that the [[Spline]] will go through smoothly.
+ * @param closed Flag for if the [[Spline]] should connect its end back to its start point.
+ * @returns [[Spline]]
+ */
+export const spline = (knots: Point[], closed = false) =>
+  new Spline(knots, closed)

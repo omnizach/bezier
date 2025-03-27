@@ -1,4 +1,6 @@
-import { IPoint } from './point'
+export type Point = [number, number]
+
+export type CubicCurveControl = [Point, Point, Point, Point]
 
 export class Curve {
   private static INTEGRATION_CONSTANTS = [
@@ -24,7 +26,7 @@ export class Curve {
 
   private findT(target: number, guess?: number): number {
     target = Math.min(target, this.length)
-    guess = guess || target / this.length
+    guess = guess ?? target / this.length
 
     const error = (this.lengthAt(guess) - target) / this.length
 
@@ -34,19 +36,14 @@ export class Curve {
   }
 
   private xs(): number[] {
-    return [this.p0.x, this.p1.x, this.p2.x, this.p3.x]
+    return this.cs.map(([x]) => x)
   }
 
   private ys(): number[] {
-    return [this.p0.y, this.p1.y, this.p2.y, this.p3.y]
+    return this.cs.map(([, y]) => y)
   }
 
-  constructor(
-    private p0: IPoint,
-    private p1: IPoint,
-    private p2: IPoint,
-    private p3: IPoint,
-  ) {
+  constructor(private cs: CubicCurveControl) {
     this.length = this.lengthAt(1)
   }
 
@@ -59,28 +56,25 @@ export class Curve {
   x(t: number = 0): number {
     const omt = 1 - t
     return (
-      omt * omt * omt * this.p0.x +
-      3 * omt * omt * t * this.p1.x +
-      3 * omt * t * t * this.p2.x +
-      t * t * t * this.p3.x
+      omt ** 3 * this.cs[0][0] +
+      3 * omt ** 2 * t * this.cs[1][0] +
+      3 * omt * t ** 2 * this.cs[2][0] +
+      t ** 3 * this.cs[3][0]
     )
   }
 
   y(t: number = 0): number {
     const omt = 1 - t
     return (
-      omt * omt * omt * this.p0.y +
-      3 * omt * omt * t * this.p1.y +
-      3 * omt * t * t * this.p2.y +
-      t * t * t * this.p3.y
+      omt ** 3 * this.cs[0][1] +
+      3 * omt ** 2 * t * this.cs[1][1] +
+      3 * omt * t ** 2 * this.cs[2][1] +
+      t ** 3 * this.cs[3][1]
     )
   }
 
-  point(t: number = 0): IPoint {
-    return {
-      x: this.x(t),
-      y: this.y(t),
-    }
+  point(t: number = 0): Point {
+    return [this.x(t), this.y(t)]
   }
 
   lengthAt(t: number = 1): number {
@@ -95,75 +89,67 @@ export class Curve {
     }).reduce((p, c) => p + c)
   }
 
-  pointAtLength(z: number = 0): IPoint {
+  pointAtLength(z: number = 0): Point {
     return this.point(this.findT(z))
   }
 
-  firstDerivative(t: number = 0): IPoint {
+  firstDerivative(t: number = 0): Point {
     const omt = 1 - t
-    return {
-      x:
-        3 * omt * omt * (this.p1.x - this.p0.x) +
-        6 * omt * t * (this.p2.x - this.p1.x) +
-        3 * t * t * (this.p3.x - this.p2.x),
-      y:
-        3 * omt * omt * (this.p1.y - this.p0.y) +
-        6 * omt * t * (this.p2.y - this.p1.y) +
-        3 * t * t * (this.p3.y - this.p2.y),
-    }
+    return [
+      3 * omt ** 2 * (this.cs[1][0] - this.cs[0][0]) +
+        6 * omt * t * (this.cs[2][0] - this.cs[1][0]) +
+        3 * t ** 2 * (this.cs[3][0] - this.cs[2][0]),
+      3 * omt ** 2 * (this.cs[1][1] - this.cs[0][1]) +
+        6 * omt * t * (this.cs[2][1] - this.cs[1][1]) +
+        3 * t ** 2 * (this.cs[3][1] - this.cs[2][1]),
+    ]
   }
 
-  secondDerivative(t: number = 0): IPoint {
+  secondDerivative(t: number = 0): Point {
     const omt = 1 - t
-    return {
-      x:
-        6 * omt * (this.p2.x - 2 * this.p1.x + this.p0.x) +
-        6 * t * (this.p3.x - 2 * this.p2.x + this.p2.x),
-      y:
-        6 * omt * (this.p2.y - 2 * this.p1.y + this.p0.y) +
-        6 * t * (this.p3.y - 2 * this.p2.y + this.p2.y),
-    }
+    return [
+      6 * omt * (this.cs[2][0] - 2 * this.cs[1][0] + this.cs[0][0]) +
+        6 * t * (this.cs[3][0] - 2 * this.cs[2][0] + this.cs[2][0]),
+      6 * omt * (this.cs[2][1] - 2 * this.cs[1][1] + this.cs[0][1]) +
+        6 * t * (this.cs[3][1] - 2 * this.cs[2][1] + this.cs[2][1]),
+    ]
   }
 
   curvature(t: number = 0): number {
     const d1 = this.firstDerivative(t),
       d2 = this.secondDerivative(t)
 
-    return (d1.x * d2.y - d1.y * d2.x) / (d1.x * d1.x + d1.y * d1.y) ** 1.5
+    return (
+      (d1[0] * d2[1] - d1[1] * d2[0]) / (d1[0] * d1[0] + d1[1] * d1[1]) ** 1.5
+    )
   }
 
-  tangent(t: number = 0): IPoint {
+  tangent(t: number = 0): Point {
     const d1 = this.firstDerivative(t),
-      d = Math.sqrt(d1.x * d1.x + d1.y * d1.y) || 1
-    return {
-      x: d1.x / d,
-      y: d1.y / d,
-    }
+      d = Math.sqrt(d1[0] ** 2 + d1[1] ** 2) || 1
+    return [d1[0] / d, d1[1] / d]
   }
 
-  normal(t: number = 0): IPoint {
+  normal(t: number = 0): Point {
     const tan = this.tangent(t)
-    return {
-      x: -tan.y,
-      y: tan.x,
-    }
+    return [-tan[1], tan[0]]
   }
 
   stroke(): string {
-    return `M ${this.p0.x}, ${this.p0.y}
-            C ${this.p1.x}, ${this.p1.y}
-              ${this.p2.x}, ${this.p2.y}
-              ${this.p3.x}, ${this.p3.y}`
+    return `M ${this.cs[0][0]}, ${this.cs[0][1]}
+            C ${this.cs[1][0]}, ${this.cs[1][1]}
+              ${this.cs[2][0]}, ${this.cs[2][1]}
+              ${this.cs[3][0]}, ${this.cs[3][1]}`
   }
 
   fill(width: number): string {
     const w2 = width / 2,
       n0 = this.normal(0),
       n3 = this.normal(1)
-    return `M ${this.p0.x - n0.x * w2}, ${this.p0.y - n0.y * w2}
-            L ${this.p0.x + n0.x * w2}, ${this.p0.y + n0.y * w2}
-            L ${this.p3.x + n3.x * w2}, ${this.p3.y + n3.y * w2}
-            L ${this.p3.x - n3.x * w2}, ${this.p3.y - n3.y * w2} Z`
+    return `M ${this.cs[0][0] - n0[0] * w2}, ${this.cs[0][1] - n0[1] * w2}
+            L ${this.cs[0][0] + n0[0] * w2}, ${this.cs[0][1] + n0[1] * w2}
+            L ${this.cs[3][0] + n3[0] * w2}, ${this.cs[3][1] + n3[1] * w2}
+            L ${this.cs[3][0] - n3[0] * w2}, ${this.cs[3][1] - n3[1] * w2} Z`
   }
 
   /**
@@ -173,6 +159,6 @@ export class Curve {
   pointTransform(t: number = 0): string {
     const p = this.point(t),
       tan = this.tangent(t)
-    return `translate(${p.x},${p.y}) rotate(${(Math.atan2(tan.y, tan.x) * 180) / Math.PI})`
+    return `translate(${p[0]},${p[1]}) rotate(${(Math.atan2(tan[1], tan[0]) * 180) / Math.PI})`
   }
 }

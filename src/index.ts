@@ -11,6 +11,5 @@
  * [MIT](http://en.wikipedia.org/wiki/MIT_License)
  */
 
-export { IPoint } from './point'
-export { Curve } from './curve'
-export { Spline } from './spline'
+export * from './curve'
+export * from './spline'
