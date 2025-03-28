@@ -1,49 +1,57 @@
 import { Curve, Point } from './curve'
 
 export class Spline {
-  private static ALMOST_ONE = 1 - 1e-6
-
   // adapted from https://www.particleincell.com/wp-content/uploads/2012/06/bezier-spline.js
   // computes control points given knots K, this is the brain of the operation
-  private static computeControlPoints(k: number[]): {
-    p1: number[]
-    p2: number[]
-  } {
-    const n = k.length - 1,
-      a = (i: number) => (i <= 0 ? 0 : i >= n - 1 ? 2 : 1),
-      b = new Array(n),
-      c = (i: number) => (i >= n - 1 ? 0 : 1),
-      p1 = new Array(n - 1),
-      p2 = new Array(n - 1)
+  private static computeControlPoints(K: number[]) {
+    const p1 = new Array<number>()
+    const p2 = new Array<number>()
+    const n = K.length - 1
 
-    b.fill(4)
+    /*rhs vector*/
+    const a = new Array<number>(),
+      b: number[] = [],
+      c: number[] = [],
+      r: number[] = []
+
+    /*left most segment*/
+    a[0] = 0
     b[0] = 2
+    c[0] = 1
+    r[0] = K[0] + 2 * K[1]
+
+    /*internal segments*/
+    for (let i = 1; i < n - 1; i++) {
+      a[i] = 1
+      b[i] = 4
+      c[i] = 1
+      r[i] = 4 * K[i] + 2 * K[i + 1]
+    }
+
+    /*right segment*/
+    a[n - 1] = 2
     b[n - 1] = 7
+    c[n - 1] = 0
+    r[n - 1] = 8 * K[n - 1] + K[n]
 
-    const r = k.slice(0, n).map((v, i) => v + 2 * k[i + 1])
-    r.push(8 * k[n - 1] + k[n])
-
-    for (let i = 0; i < b.length - 1; i++) {
-      const m = a(i + 1) / b[i]
-      b[i + 1] -= m * c(i)
-      r[i + 1] -= m * r[i]
+    /*solves Ax=b with the Thomas algorithm (from Wikipedia)*/
+    for (let i = 1; i < n; i++) {
+      const m = a[i] / b[i - 1]
+      b[i] = b[i] - m * c[i - 1]
+      r[i] = r[i] - m * r[i - 1]
     }
 
     p1[n - 1] = r[n - 1] / b[n - 1]
+    for (let i = n - 2; i >= 0; --i) p1[i] = (r[i] - c[i] * p1[i + 1]) / b[i]
 
-    for (let i = b.length - 2; i > 0; i--) {
-      p2[i] = 2 * k[i + 1] - p1[i + 1]
-    }
+    /*we have p1, now compute p2*/
+    for (let i = 0; i < n - 1; i++) p2[i] = 2 * K[i + 1] - p1[i + 1]
 
-    p2[n - 1] = 0.5 * (k[n] + p1[n - 1])
+    p2[n - 1] = 0.5 * (K[n] + p1[n - 1])
 
-    return {
-      p1,
-      p2,
-    }
+    return { p1: p1, p2: p2 }
   }
 
-  // TODO: Probably should extract into a Math Extensions class.
   private static mod = (n: number, m: number) => ((n % m) + m) % m
 
   private static extendClosedSpline<T>(xs: T[]): T[] {
@@ -111,10 +119,7 @@ export class Spline {
 
   private marshalCurve<T>(func: (t: number) => T): (t: number) => T {
     return t => {
-      t =
-        (t < 0 ? 0 : t > Spline.ALMOST_ONE ? Spline.ALMOST_ONE : t) *
-          this.curves.length || 0
-
+      t = t < 0 ? 0 : t >= this.endT ? this.endT : t
       return func.call(this.curves[t | 0], t % 1)
     }
   }
@@ -127,9 +132,9 @@ export class Spline {
   ): number {
     const mid = (start + stop) >>> 1
 
-    return (lengths[mid - 1] || 0) <= z && z <= lengths[mid]
+    return (lengths[mid - 1] ?? 0) <= z && z <= lengths[mid]
       ? mid
-      : z < (lengths[mid - 1] || 0)
+      : z < (lengths[mid - 1] ?? 0)
         ? Spline.findCurveIndex(lengths, z, start, mid)
         : Spline.findCurveIndex(lengths, z, mid + 1, stop)
   }
@@ -145,7 +150,7 @@ export class Spline {
     )
 
     this.length = this.curves[this.curves.length - 1].endLength
-    this.endT = this.curves.length
+    this.endT = this.curves.length - 1e-6
   }
 
   /**
@@ -286,6 +291,10 @@ export class Spline {
    */
   fill(width: number): string {
     return this.curves.map(c => c.fill(width)).join(' ')
+  }
+
+  toString(): string {
+    return this.curves.map(c => c.toString()).join(' ')
   }
 }
 

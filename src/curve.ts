@@ -3,7 +3,7 @@ export type Point = [number, number]
 export type CubicCurveControl = [Point, Point, Point, Point]
 
 export class Curve {
-  private static INTEGRATION_CONSTANTS = [
+  private static INTEGRATION_CONSTANTS: Point[] = [
     [-0.1252, 0.2491],
     [0.1252, 0.2491],
     [-0.3678, 0.2335],
@@ -81,12 +81,18 @@ export class Curve {
     t = t <= 0 ? 0 : t > 1 ? 1 : t
     const t2 = t / 2
 
-    return Curve.INTEGRATION_CONSTANTS.map(d => {
-      const ct = t2 * d[0] + t2,
-        b3x = Curve.base3(ct, this.xs()),
-        b3y = Curve.base3(ct, this.ys())
-      return d[1] * Math.sqrt(b3x * b3x + b3y * b3y)
-    }).reduce((p, c) => p + c)
+    return (
+      t2 *
+      Curve.INTEGRATION_CONSTANTS.map(d => {
+        const ct = t2 * d[0] + t2
+        return (
+          d[1] *
+          Math.sqrt(
+            Curve.base3(ct, this.xs()) ** 2 + Curve.base3(ct, this.ys()) ** 2,
+          )
+        )
+      }).reduce((p, c) => p + c, 0)
+    )
   }
 
   pointAtLength(z: number = 0): Point {
@@ -161,4 +167,10 @@ export class Curve {
       tan = this.tangent(t)
     return `translate(${p[0]},${p[1]}) rotate(${(Math.atan2(tan[1], tan[0]) * 180) / Math.PI})`
   }
+
+  toString(): string {
+    return `[[${this.cs[0][0]}, ${this.cs[0][1]}], [${this.cs[1][0]}, ${this.cs[1][1]}], [${this.cs[2][0]}, ${this.cs[2][1]}], [${this.cs[3][0]}, ${this.cs[3][1]}]]`
+  }
 }
+
+export const curve = (cs: CubicCurveControl) => new Curve(cs)
