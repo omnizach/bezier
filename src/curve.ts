@@ -142,20 +142,16 @@ export class Curve {
   }
 
   stroke(): string {
-    return `M ${this.cs[0][0]}, ${this.cs[0][1]}
-            C ${this.cs[1][0]}, ${this.cs[1][1]}
-              ${this.cs[2][0]}, ${this.cs[2][1]}
-              ${this.cs[3][0]}, ${this.cs[3][1]}`
+    const [[x0, y0], [x1, y1], [x2, y2], [x3, y3]] = this.cs
+    return `M${x0},${y0}C${x1},${y1} ${x2},${y2} ${x3},${y3}`
   }
 
   fill(width: number): string {
     const w2 = width / 2,
-      n0 = this.normal(0),
-      n3 = this.normal(1)
-    return `M ${this.cs[0][0] - n0[0] * w2}, ${this.cs[0][1] - n0[1] * w2}
-            L ${this.cs[0][0] + n0[0] * w2}, ${this.cs[0][1] + n0[1] * w2}
-            L ${this.cs[3][0] + n3[0] * w2}, ${this.cs[3][1] + n3[1] * w2}
-            L ${this.cs[3][0] - n3[0] * w2}, ${this.cs[3][1] - n3[1] * w2} Z`
+      [n0x, n0y] = this.normal(0),
+      [n1x, n1y] = this.normal(1),
+      [[x0, y0], , [x1, y1]] = this.cs
+    return `M${x0 - n0x * w2},${y0 - n0y * w2}L${x0 + n0x * w2},${y0 + n0y * w2}L${x1 + n1x * w2},${y1 + n1y * w2}L${x1 - n1x * w2},${y1 - n1y * w2}Z`
   }
 
   /**
@@ -163,13 +159,14 @@ export class Curve {
    * @param t Parametric value along the curve in the range [0, 1].
    */
   pointTransform(t: number = 0): string {
-    const p = this.point(t),
-      tan = this.tangent(t)
-    return `translate(${p[0]},${p[1]}) rotate(${(Math.atan2(tan[1], tan[0]) * 180) / Math.PI})`
+    const [px, py] = this.point(t),
+      [tx, ty] = this.tangent(t)
+    return `translate(${px},${py}) rotate(${(Math.atan2(ty, tx) * 180) / Math.PI})`
   }
 
   toString(): string {
-    return `[[${this.cs[0][0]}, ${this.cs[0][1]}], [${this.cs[1][0]}, ${this.cs[1][1]}], [${this.cs[2][0]}, ${this.cs[2][1]}], [${this.cs[3][0]}, ${this.cs[3][1]}]]`
+    const [[x0, y0], [x1, y1], [x2, y2], [x3, y3]] = this.cs
+    return `[[${x0}, ${y0}], [${x1}, ${y1}], [${x2}, ${y2}], [${x3}, ${y3}]]`
   }
 }
 

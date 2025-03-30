@@ -25,6 +25,8 @@ test('curve points are accurate at end points', t => {
 
   t.is(c.x(0), 1)
   t.is(c.y(0), 0)
+  t.is(c.x(), 1)
+  t.is(c.y(), 0)
   t.deepEqual(c.point(), [1, 0])
   t.deepEqual(c.point(0), [1, 0])
   t.is(c.x(1), 0)
@@ -72,6 +74,9 @@ test('curve lengthAt is accurate', t => {
     //t.log(e, c.lengthAt(e), e * Math.SQRT2 * 2)
     t.true(near(c.lengthAt(e), e * Math.SQRT2 * 2))
   }
+
+  t.is(c.length, c.lengthAt())
+  t.true(near(c.length, Math.SQRT2 * 2))
 })
 
 test('curve pointAtLength is accurate', t => {
@@ -86,4 +91,116 @@ test('curve pointAtLength is accurate', t => {
     t.log(z, c.pointAtLength(z), z + 1)
     t.true(near(c.pointAtLength(z)[0], z + 1))
   }
+
+  t.deepEqual(c.pointAtLength(), [1, 1])
+})
+
+test('curve firstDerivative', t => {
+  const c = curve([
+    [1, 0],
+    [1, 1],
+    [1, 1],
+    [0, 1],
+  ])
+
+  t.deepEqual(c.firstDerivative(0), [0, 3])
+  t.deepEqual(c.firstDerivative(), [0, 3])
+  t.deepEqual(c.firstDerivative(1), [-3, 0])
+})
+
+test('curve secondDerivative', t => {
+  const c = curve([
+    [1, 0],
+    [1, 1],
+    [1, 1],
+    [0, 1],
+  ])
+
+  t.deepEqual(c.secondDerivative(0), [0, -6])
+  t.deepEqual(c.secondDerivative(), [0, -6])
+  t.deepEqual(c.secondDerivative(1), [-6, 0])
+})
+
+test('curve curvature', t => {
+  const c = curve([
+    [1, 0],
+    [1, 1],
+    [1, 1],
+    [0, 1],
+  ])
+
+  t.deepEqual(c.curvature(0.5), 3.771236166328254)
+  t.deepEqual(c.curvature(), -0)
+})
+
+test('curve tangent', t => {
+  const c = curve([
+    [1, 0],
+    [1, 1],
+    [1, 1],
+    [0, 1],
+  ])
+
+  t.deepEqual(c.tangent(0), [0, 1])
+  t.deepEqual(c.tangent(), [0, 1])
+  t.deepEqual(c.tangent(1), [-1, 0])
+})
+
+test('curve normal', t => {
+  const c = curve([
+    [1, 0],
+    [1, 1],
+    [1, 1],
+    [0, 1],
+  ])
+
+  t.deepEqual(c.normal(0), [-1, 0])
+  t.deepEqual(c.normal(), [-1, 0])
+  t.deepEqual(c.normal(1), [-0, -1])
+})
+
+test('curve stroke', t => {
+  const c = curve([
+    [1, 0],
+    [1, 1],
+    [1, 1],
+    [0, 1],
+  ])
+
+  t.deepEqual(c.stroke(), `M1,0C1,1 1,1 0,1`)
+})
+
+test('curve fill', t => {
+  const c = curve([
+    [4, 0],
+    [4, 4],
+    [4, 4],
+    [0, 4],
+  ])
+
+  t.deepEqual(c.fill(2), `M5,0L3,0L4,3L4,5Z`)
+})
+
+test('curve pointTransform', t => {
+  const c = curve([
+    [1, 0],
+    [1, 1],
+    [1, 1],
+    [0, 1],
+  ])
+
+  t.deepEqual(c.pointTransform(0), 'translate(1,0) rotate(90)')
+  t.deepEqual(c.pointTransform(), 'translate(1,0) rotate(90)')
+  t.deepEqual(c.pointTransform(1), 'translate(0,1) rotate(180)')
+})
+
+test('curve toString', t => {
+  const c = curve([
+    [1, 0],
+    [1, 1],
+    [1, 1],
+    [0, 1],
+  ])
+
+  t.deepEqual(c.toString(), '[[1, 0], [1, 1], [1, 1], [0, 1]]')
 })
