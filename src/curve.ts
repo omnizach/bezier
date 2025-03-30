@@ -83,10 +83,10 @@ export class Curve {
 
     return (
       t2 *
-      Curve.INTEGRATION_CONSTANTS.map(d => {
-        const ct = t2 * d[0] + t2
+      Curve.INTEGRATION_CONSTANTS.map(([x, y]) => {
+        const ct = t2 * x + t2
         return (
-          d[1] *
+          y *
           Math.sqrt(
             Curve.base3(ct, this.xs()) ** 2 + Curve.base3(ct, this.ys()) ** 2,
           )
