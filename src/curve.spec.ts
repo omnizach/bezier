@@ -77,6 +77,9 @@ test('curve lengthAt is accurate', t => {
 
   t.is(c.length, c.lengthAt())
   t.true(near(c.length, Math.SQRT2 * 2))
+
+  t.is(c.lengthAt(-1), c.lengthAt(0))
+  t.is(c.lengthAt(2), c.lengthAt(1))
 })
 
 test('curve pointAtLength is accurate', t => {
