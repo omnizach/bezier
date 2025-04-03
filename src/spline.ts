@@ -117,11 +117,9 @@ export class Spline {
     return result
   }
 
-  private marshalCurve<T>(func: (t: number) => T): (t: number) => T {
-    return t => {
-      t = t < 0 ? 0 : t >= this.endT ? this.endT : t
-      return func.call(this.curves[t | 0], t % 1)
-    }
+  private indexOffset(t: number): [number, number] {
+    t = t < 0 ? 0 : t > this.endT ? this.endT : t
+    return [t | 0, t % 1]
   }
 
   private static findCurveIndex(
@@ -171,65 +169,84 @@ export class Spline {
   /**
    * Get the x coordinate given t in the range [0, endT].
    */
-  x: (t: number) => number = this.marshalCurve(Curve.prototype.x)
+  x(t: number): number {
+    const [i, o] = this.indexOffset(t)
+    return this.curves[i].x(o)
+  }
 
   /**
    * Get the y coordinate given t in the range [0, endT].
    */
-  y: (t: number) => number = this.marshalCurve(Curve.prototype.y)
+  y(t: number): number {
+    const [i, o] = this.indexOffset(t)
+    return this.curves[i].y(o)
+  }
 
   /**
    * Get the [[Point]] given t in the range [0, endT].
    */
-  point: (t: number) => Point = this.marshalCurve(Curve.prototype.point)
+  point(t: number): Point {
+    const [i, o] = this.indexOffset(t)
+    return this.curves[i].point(o)
+  }
 
   /**
    * Get the component-wise first derivative at the given t in the range [0, endT].
    * Returns as an [[Point]] representing the derivatives with respect to x and y.
    */
-  firstDerivative: (t: number) => Point = this.marshalCurve(
-    Curve.prototype.firstDerivative,
-  )
+  firstDerivative(t: number): Point {
+    const [i, o] = this.indexOffset(t)
+    return this.curves[i].firstDerivative(o)
+  }
 
   /**
    * Get the component-wise second derivative at the given t in the range [0, endT].
    * Returns as an [[Point]] representing the 2nd derivatives with respect to x and y.
    */
-  secondDerivative: (t: number) => Point = this.marshalCurve(
-    Curve.prototype.secondDerivative,
-  )
+  secondDerivative(t: number): Point {
+    const [i, o] = this.indexOffset(t)
+    return this.curves[i].secondDerivative(o)
+  }
 
   /**
    * Get the curvature at the given t in the range [0, endT].
    * Curvature is the inverse of the instantaneous radius.
    * Note: for a straight line, curvature will return either Infinity or -Infinity.
    */
-  curvature: (t: number) => number = this.marshalCurve(
-    Curve.prototype.curvature,
-  )
+  curvature(t: number): number {
+    const [i, o] = this.indexOffset(t)
+    return this.curves[i].curvature(o)
+  }
 
   /**
    * Get the tangent at the given t in the range [0, endT]. The direction will be in the
    * increasing-t direction.
    * Returns as an [[Point]] representing the unit vector direction of the tangent.
    */
-  tangent: (t: number) => Point = this.marshalCurve(Curve.prototype.tangent)
+  tangent(t: number): Point {
+    const [i, o] = this.indexOffset(t)
+    return this.curves[i].tangent(o)
+  }
 
   /**
    * Get the normal at the given t in the range [0, endT]. The direction points to the left
    * with respect to the tangent direction.
    * Returns as an [[Point]] respresenting the unit vector direction of the normal.
    */
-  normal: (t: number) => Point = this.marshalCurve(Curve.prototype.normal)
+  normal(t: number): Point {
+    const [i, o] = this.indexOffset(t)
+    return this.curves[i].normal(o)
+  }
 
   /**
    * Get the transform string at the given t in the range [0, endT]. This will result in an SVG/CSS
    * transform that translates to the resulting point and is rotated along the direction of the
    * tangent. This is analogous to a particle traveling along the spline at position t.
    */
-  pointTransform: (t: number) => string = this.marshalCurve(
-    Curve.prototype.pointTransform,
-  )
+  pointTransform(t: number): string {
+    const [i, o] = this.indexOffset(t)
+    return this.curves[i].pointTransform(o)
+  }
 
   /**
    * Get the point along the Spline at length z. Note that this operation is much more expensive
