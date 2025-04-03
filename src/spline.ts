@@ -169,7 +169,7 @@ export class Spline {
   /**
    * Get the x coordinate given t in the range [0, endT].
    */
-  x(t: number): number {
+  x(t: number = 0): number {
     const [i, o] = this.indexOffset(t)
     return this.curves[i].x(o)
   }
@@ -177,7 +177,7 @@ export class Spline {
   /**
    * Get the y coordinate given t in the range [0, endT].
    */
-  y(t: number): number {
+  y(t: number = 0): number {
     const [i, o] = this.indexOffset(t)
     return this.curves[i].y(o)
   }
@@ -185,16 +185,21 @@ export class Spline {
   /**
    * Get the [[Point]] given t in the range [0, endT].
    */
-  point(t: number): Point {
+  point(t: number = 0): Point {
     const [i, o] = this.indexOffset(t)
     return this.curves[i].point(o)
+  }
+
+  lengthAt(t: number = this.endT): number {
+    const [i, o] = this.indexOffset(t)
+    return this.curves[i].startLength + this.curves[i].lengthAt(o)
   }
 
   /**
    * Get the component-wise first derivative at the given t in the range [0, endT].
    * Returns as an [[Point]] representing the derivatives with respect to x and y.
    */
-  firstDerivative(t: number): Point {
+  firstDerivative(t: number = 0): Point {
     const [i, o] = this.indexOffset(t)
     return this.curves[i].firstDerivative(o)
   }
@@ -203,7 +208,7 @@ export class Spline {
    * Get the component-wise second derivative at the given t in the range [0, endT].
    * Returns as an [[Point]] representing the 2nd derivatives with respect to x and y.
    */
-  secondDerivative(t: number): Point {
+  secondDerivative(t: number = 0): Point {
     const [i, o] = this.indexOffset(t)
     return this.curves[i].secondDerivative(o)
   }
@@ -213,7 +218,7 @@ export class Spline {
    * Curvature is the inverse of the instantaneous radius.
    * Note: for a straight line, curvature will return either Infinity or -Infinity.
    */
-  curvature(t: number): number {
+  curvature(t: number = 0): number {
     const [i, o] = this.indexOffset(t)
     return this.curves[i].curvature(o)
   }
@@ -223,7 +228,7 @@ export class Spline {
    * increasing-t direction.
    * Returns as an [[Point]] representing the unit vector direction of the tangent.
    */
-  tangent(t: number): Point {
+  tangent(t: number = 0): Point {
     const [i, o] = this.indexOffset(t)
     return this.curves[i].tangent(o)
   }
@@ -233,7 +238,7 @@ export class Spline {
    * with respect to the tangent direction.
    * Returns as an [[Point]] respresenting the unit vector direction of the normal.
    */
-  normal(t: number): Point {
+  normal(t: number = 0): Point {
     const [i, o] = this.indexOffset(t)
     return this.curves[i].normal(o)
   }
@@ -243,7 +248,7 @@ export class Spline {
    * transform that translates to the resulting point and is rotated along the direction of the
    * tangent. This is analogous to a particle traveling along the spline at position t.
    */
-  pointTransform(t: number): string {
+  pointTransform(t: number = 0): string {
     const [i, o] = this.indexOffset(t)
     return this.curves[i].pointTransform(o)
   }
