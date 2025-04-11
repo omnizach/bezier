@@ -91,7 +91,7 @@ test('curve pointAtLength is accurate', t => {
   ])
 
   for (let z = 0; z <= 2; z += 0.5) {
-    t.log(z, c.pointAtLength(z), z + 1)
+    //t.log(z, c.pointAtLength(z), z + 1)
     t.true(near(c.pointAtLength(z)[0], z + 1))
   }
 

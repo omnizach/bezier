@@ -73,11 +73,7 @@ export class Spline {
     return xs.slice(12, xs.length - 24)
   }
 
-  private static computeSpline(
-    xs: number[],
-    ys: number[],
-    closed: boolean = false,
-  ): Curve[] {
+  private static computeSpline(xs: number[], ys: number[], closed: boolean = false): Curve[] {
     if (closed) {
       xs = Spline.extendClosedSpline(xs)
       ys = Spline.extendClosedSpline(ys)
@@ -122,12 +118,7 @@ export class Spline {
     return [t | 0, t % 1]
   }
 
-  private static findCurveIndex(
-    lengths: number[],
-    z: number,
-    start: number,
-    stop: number,
-  ): number {
+  private static findCurveIndex(lengths: number[], z: number, start: number, stop: number): number {
     const mid = (start + stop) >>> 1
 
     return (lengths[mid - 1] ?? 0) <= z && z <= lengths[mid]
@@ -261,6 +252,7 @@ export class Spline {
    * @param z The length along the Spline to find.
    */
   pointAtLength(z: number = 0): Point {
+    z = z < 0 ? 0 : z > this.length ? this.length : z
     const i = Spline.findCurveIndex(
       this.curves.map(c => c.endLength),
       z,
@@ -292,10 +284,10 @@ export class Spline {
    */
   normalize(curveLength?: number, curveCount?: number): Spline {
     curveLength = curveLength || this.length / curveCount! || 1
-    curveCount = Math.ceil(this.length / curveLength)
+    curveCount = Math.ceil(this.length / curveLength) + 1
 
     return new Spline(
-      Array(curveCount).map((_, i) => this.pointAtLength(i * curveLength!)),
+      [...Array(curveCount).keys()].map(d => this.pointAtLength(d * curveLength!)),
       this.closed,
     )
   }
@@ -326,5 +318,4 @@ export class Spline {
  * @param closed Flag for if the [[Spline]] should connect its end back to its start point.
  * @returns [[Spline]]
  */
-export const spline = (knots: Point[], closed = false) =>
-  new Spline(knots, closed)
+export const spline = (knots: Point[], closed = false) => new Spline(knots, closed)

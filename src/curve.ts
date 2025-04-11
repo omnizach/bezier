@@ -30,9 +30,7 @@ export class Curve {
 
     const error = (this.lengthAt(guess) - target) / this.length
 
-    return Math.abs(error) < 0.0001
-      ? guess
-      : this.findT(target, guess - error / 2)
+    return Math.abs(error) < 1e-6 ? guess : this.findT(target, guess - error / 2)
   }
 
   private xs(): number[] {
@@ -85,17 +83,13 @@ export class Curve {
       t2 *
       Curve.INTEGRATION_CONSTANTS.map(([x, y]) => {
         const ct = t2 * x + t2
-        return (
-          y *
-          Math.sqrt(
-            Curve.base3(ct, this.xs()) ** 2 + Curve.base3(ct, this.ys()) ** 2,
-          )
-        )
+        return y * Math.sqrt(Curve.base3(ct, this.xs()) ** 2 + Curve.base3(ct, this.ys()) ** 2)
       }).reduce((p, c) => p + c, 0)
     )
   }
 
   pointAtLength(z: number = 0): Point {
+    //return this.point(this.findT(z < 0 ? 0 : z > this.length ? this.length : z))
     return this.point(this.findT(z))
   }
 
@@ -125,9 +119,7 @@ export class Curve {
     const d1 = this.firstDerivative(t),
       d2 = this.secondDerivative(t)
 
-    return (
-      (d1[0] * d2[1] - d1[1] * d2[0]) / (d1[0] * d1[0] + d1[1] * d1[1]) ** 1.5
-    )
+    return (d1[0] * d2[1] - d1[1] * d2[0]) / (d1[0] * d1[0] + d1[1] * d1[1]) ** 1.5
   }
 
   tangent(t: number = 0): Point {
