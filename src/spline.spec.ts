@@ -255,3 +255,30 @@ test('spline normalize', t => {
   t.deepEqual(Math.round(n.x(n.endT) * 10), 7.1 * 10)
   t.deepEqual(n.y(), 1)
 })
+
+test('spline closed', t => {
+  const c = spline([
+    [1, 0],
+    [0, 1],
+    [-1, 0],
+    [0, -1],
+    [1, 0],
+    [0, 1],
+    [-1, 0],
+    [0, -1],
+    [1, 0],
+    [0, 1],
+    [-1, 0],
+    [0, -1],
+    [1, 0],
+    [0, 1],
+    [-1, 0],
+    [0, -1],
+    [1, 0],
+    [0, 1],
+    [-1, 0],
+    [0, -1],
+  ])
+
+  t.deepEqual(c.curves.length, 19)
+})

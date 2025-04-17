@@ -52,45 +52,10 @@ export class Spline {
     return { p1: p1, p2: p2 }
   }
 
-  private static mod = (n: number, m: number) => ((n % m) + m) % m
-
-  private static extendClosedSpline<T>(xs: T[]): T[] {
-    const left = [],
-      right = []
-
-    for (let i = 0; i < 12; i++) {
-      left.push(xs[Spline.mod(xs.length - i - 1, xs.length)])
-    }
-
-    for (let i = 0; i < 12; i++) {
-      right.push(xs[i % xs.length])
-    }
-
-    return left.concat(xs).concat(right)
-  }
-
-  private static sliceClosedSpline<T>(xs: T[]): T[] {
-    return xs.slice(12, xs.length - 24)
-  }
-
-  private static computeSpline(xs: number[], ys: number[], closed: boolean = false): Curve[] {
-    if (closed) {
-      xs = Spline.extendClosedSpline(xs)
-      ys = Spline.extendClosedSpline(ys)
-    }
-
+  private static computeSpline(xs: number[], ys: number[]): Curve[] {
     const cx = Spline.computeControlPoints(xs),
       cy = Spline.computeControlPoints(ys),
       result = []
-
-    if (closed) {
-      xs = Spline.sliceClosedSpline(xs)
-      ys = Spline.sliceClosedSpline(ys)
-      cx.p1 = Spline.sliceClosedSpline(cx.p1)
-      cx.p2 = Spline.sliceClosedSpline(cx.p2)
-      cy.p1 = Spline.sliceClosedSpline(cy.p1)
-      cy.p2 = Spline.sliceClosedSpline(cy.p2)
-    }
 
     for (let i = 0, startLength = 0; i < xs.length - 1; i++) {
       const c = new Curve([
@@ -128,14 +93,10 @@ export class Spline {
         : Spline.findCurveIndex(lengths, z, mid + 1, stop)
   }
 
-  constructor(
-    public readonly knots: Point[],
-    public readonly closed: boolean = false,
-  ) {
+  constructor(public readonly knots: Point[]) {
     this.curves = Spline.computeSpline(
       knots.map(([x]) => x),
       knots.map(([, y]) => y),
-      closed,
     )
 
     this.length = this.curves[this.curves.length - 1].endLength
@@ -286,10 +247,7 @@ export class Spline {
     curveLength = curveLength || this.length / curveCount! || 1
     curveCount = Math.ceil(this.length / curveLength) + 1
 
-    return new Spline(
-      [...Array(curveCount).keys()].map(d => this.pointAtLength(d * curveLength!)),
-      this.closed,
-    )
+    return new Spline([...Array(curveCount).keys()].map(d => this.pointAtLength(d * curveLength!)))
   }
 
   /**
@@ -318,4 +276,4 @@ export class Spline {
  * @param closed Flag for if the [[Spline]] should connect its end back to its start point.
  * @returns [[Spline]]
  */
-export const spline = (knots: Point[], closed = false) => new Spline(knots, closed)
+export const spline = (knots: Point[]) => new Spline(knots)
