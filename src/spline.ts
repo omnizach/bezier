@@ -262,8 +262,9 @@ export class Spline {
    * Creates a path string that draws the Spline.
    */
   stroke(): string {
-    
-    return `M${this.knots?.[0]?.[0] ?? 0},${this.knots?.[0]?.[1] ?? 0}` + this.curves.map(c => c.stroke(false)).join(' ')
+    return (
+      `M${this.knots?.[0]?.[0] ?? 0},${this.knots?.[0]?.[1] ?? 0}` + this.curves.map(c => c.stroke(false)).join(' ')
+    )
   }
 
   /**
