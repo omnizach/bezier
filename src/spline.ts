@@ -1,5 +1,9 @@
 import { Curve, Point } from './curve'
 
+export interface SplineOptions {
+  positioning: 'absolute' | 'relative'
+}
+
 export class Spline {
   // adapted from https://www.particleincell.com/wp-content/uploads/2012/06/bezier-spline.js
   // computes control points given knots K, this is the brain of the operation
@@ -93,10 +97,14 @@ export class Spline {
         : Spline.findCurveIndex(lengths, z, mid + 1, stop)
   }
 
-  constructor(public readonly knots: Point[]) {
+  constructor(
+    public readonly knots: Point[],
+    public readonly options: SplineOptions = { positioning: 'absolute' },
+  ) {
+    const [x0, y0] = knots[0] ?? [0, 0]
     this.curves = Spline.computeSpline(
-      knots.map(([x]) => x),
-      knots.map(([, y]) => y),
+      knots.map(([x]) => (options.positioning === 'absolute' ? x : x - x0)),
+      knots.map(([, y]) => (options.positioning === 'absolute' ? y : y - y0)),
     )
 
     this.length = this.curves[this.curves.length - 1].endLength
@@ -254,7 +262,8 @@ export class Spline {
    * Creates a path string that draws the Spline.
    */
   stroke(): string {
-    return this.curves.map(c => c.stroke()).join(' ')
+    
+    return `M${this.knots?.[0]?.[0] ?? 0},${this.knots?.[0]?.[1] ?? 0}` + this.curves.map(c => c.stroke(false)).join(' ')
   }
 
   /**
@@ -268,6 +277,10 @@ export class Spline {
   toString(): string {
     return this.curves.map(c => c.toString()).join(' ')
   }
+
+  reverse(): Spline {
+    return new Spline(this.knots.reverse())
+  }
 }
 
 /**
@@ -276,4 +289,4 @@ export class Spline {
  * @param closed Flag for if the [[Spline]] should connect its end back to its start point.
  * @returns [[Spline]]
  */
-export const spline = (knots: Point[]) => new Spline(knots)
+export const spline = (knots: Point[], options?: SplineOptions) => new Spline(knots, options)

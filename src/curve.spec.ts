@@ -171,6 +171,7 @@ test('curve stroke', t => {
   ])
 
   t.deepEqual(c.stroke(), `M1,0C1,1 1,1 0,1`)
+  t.deepEqual(c.stroke(false), `C1,1 1,1 0,1`)
 })
 
 test('curve fill', t => {
@@ -206,4 +207,15 @@ test('curve toString', t => {
   ])
 
   t.deepEqual(c.toString(), '[[1, 0], [1, 1], [1, 1], [0, 1]]')
+})
+
+test('curve reverse', t => {
+  const c = curve([
+    [1, 1],
+    [2, 4],
+    [3, 9],
+    [4, 16],
+  ]).reverse()
+
+  t.deepEqual(c.toString(), '[[4, 16], [3, 9], [2, 4], [1, 1]]')
 })

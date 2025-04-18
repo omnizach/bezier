@@ -133,9 +133,9 @@ export class Curve {
     return [-tan[1], tan[0]]
   }
 
-  stroke(): string {
+  stroke(moveTo: boolean = true): string {
     const [[x0, y0], [x1, y1], [x2, y2], [x3, y3]] = this.cs
-    return `M${x0},${y0}C${x1},${y1} ${x2},${y2} ${x3},${y3}`
+    return `${moveTo ? `M${x0},${y0}` : ''}C${x1},${y1} ${x2},${y2} ${x3},${y3}`
   }
 
   fill(width: number): string {
@@ -159,6 +159,10 @@ export class Curve {
   toString(): string {
     const [[x0, y0], [x1, y1], [x2, y2], [x3, y3]] = this.cs
     return `[[${x0}, ${y0}], [${x1}, ${y1}], [${x2}, ${y2}], [${x3}, ${y3}]]`
+  }
+
+  reverse(): Curve {
+    return new Curve(this.cs.reverse() as CubicCurveControl)
   }
 }
 
