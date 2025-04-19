@@ -101,10 +101,14 @@ export class Spline {
     public readonly knots: Point[],
     public readonly options: SplineOptions = { positioning: 'absolute' },
   ) {
-    const [x0, y0] = knots[0] ?? [0, 0]
+    if (options.positioning === 'relative') {
+      for (let i = 1; i < knots.length; i++) {
+        knots[i] = [knots[i - 1][0] + knots[i][0], knots[i - 1][1] + knots[i][1]]
+      }
+    }
     this.curves = Spline.computeSpline(
-      knots.map(([x]) => (options.positioning === 'absolute' ? x : x - x0)),
-      knots.map(([, y]) => (options.positioning === 'absolute' ? y : y - y0)),
+      knots.map(([x]) => x),
+      knots.map(([, y]) => y),
     )
 
     this.length = this.curves[this.curves.length - 1].endLength
@@ -261,9 +265,10 @@ export class Spline {
   /**
    * Creates a path string that draws the Spline.
    */
-  stroke(): string {
+  stroke(moveTo: boolean = true): string {
     return (
-      `M${this.knots?.[0]?.[0] ?? 0},${this.knots?.[0]?.[1] ?? 0}` + this.curves.map(c => c.stroke(false)).join(' ')
+      (moveTo ? `M${this.knots?.[0]?.[0] ?? 0},${this.knots?.[0]?.[1] ?? 0}` : '') +
+      this.curves.map(c => c.stroke(false)).join(' ')
     )
   }
 

@@ -293,11 +293,11 @@ test('spline relative points', t => {
     s = spline(pts, { positioning: 'relative' })
 
   t.deepEqual(s.knots, pts)
-  t.deepEqual(s.point(0), [0, 0])
-  t.deepEqual(s.point(1), [1, 1])
-  t.deepEqual(s.point(2), [2, 0])
-  t.true(near(s.x(3), 3))
-  t.true(near(s.y(3), 1))
+  t.deepEqual(s.point(0), [1, 1])
+  t.deepEqual(s.point(1), [3, 3])
+  t.deepEqual(s.point(2), [6, 4])
+  t.true(near(s.x(3), 10))
+  t.true(near(s.y(3), 6))
 })
 
 test('spline reverse', t => {
