@@ -1,7 +1,9 @@
 import { Curve, Point } from './curve'
 
+export type Positioning = 'absolute' | 'relative'
+
 export interface SplineOptions {
-  positioning: 'absolute' | 'relative'
+  positioning?: Positioning
 }
 
 export class Spline {
@@ -101,11 +103,6 @@ export class Spline {
     public readonly knots: Point[],
     public readonly options: SplineOptions = { positioning: 'absolute' },
   ) {
-    if (options.positioning === 'relative') {
-      for (let i = 1; i < knots.length; i++) {
-        knots[i] = [knots[i - 1][0] + knots[i][0], knots[i - 1][1] + knots[i][1]]
-      }
-    }
     this.curves = Spline.computeSpline(
       knots.map(([x]) => x),
       knots.map(([, y]) => y),
@@ -287,6 +284,22 @@ export class Spline {
   reverse(): Spline {
     return new Spline(this.knots.reverse())
   }
+
+  relative(): Spline {
+    if (this.options.positioning === 'relative') {
+      return this
+    }
+
+    return new Spline(
+      this.knots
+        .slice(1)
+        .reduce(
+          (p, [cx, cy]) => [...p, [cx + p[p.length - 1][0], cy + p[p.length - 1][1]]],
+          this.knots?.[0] ? [this.knots[0]] : [],
+        ),
+      { ...this.options, positioning: 'relative' },
+    )
+  }
 }
 
 /**
@@ -295,4 +308,4 @@ export class Spline {
  * @param closed Flag for if the [[Spline]] should connect its end back to its start point.
  * @returns [[Spline]]
  */
-export const spline = (knots: Point[], options?: SplineOptions) => new Spline(knots, options)
+export const spline = (knots: Point[]) => new Spline(knots)

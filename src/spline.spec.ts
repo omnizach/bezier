@@ -290,9 +290,8 @@ test('spline relative points', t => {
       [3, 1],
       [4, 2],
     ],
-    s = spline(pts, { positioning: 'relative' })
+    s = spline(pts).relative().relative()
 
-  t.deepEqual(s.knots, pts)
   t.deepEqual(s.point(0), [1, 1])
   t.deepEqual(s.point(1), [3, 3])
   t.deepEqual(s.point(2), [6, 4])
